@@ -1,57 +1,59 @@
 <script setup lang="ts">
-import { reactive, ref } from 'vue';
+import { computed, ref } from 'vue';
 import { useDatenStore } from '../../application/store';
 import type { Person } from '../../domain/types';
 import { personName } from '../../domain/types';
+import { DIENSTARTEN } from '../../domain/dienste';
+import { abwesenheitsLabel, machtIrgendeinenDienst } from '../../domain/person';
+import { formatDatum } from '../../domain/datum';
+import PersonForm from '../components/PersonForm.vue';
 
 const store = useDatenStore();
 
 const formularSichtbar = ref(false);
-const bearbeiteteId = ref<string | null>(null);
-const formular = reactive({
-  vorname: '',
-  nachname: '',
-  rolle: 'Mitarbeiter' as Person['rolle'],
-  wochenstunden: '' as string | number,
-});
+const bearbeitetePerson = ref<Person | null>(null);
+const inaktiveAnzeigen = ref(false);
 
-const rollenBadge: Record<Person['rolle'], string> = {
-  Teamleiter: 'badge-blue',
-  Mitarbeiter: 'badge-green',
-  Azubi: 'badge-orange',
-};
+const sichtbarePersonen = computed(() =>
+  inaktiveAnzeigen.value ? store.personen : store.personen.filter((p) => p.aktiv),
+);
+
+const anzahlInaktive = computed(() => store.personen.filter((p) => !p.aktiv).length);
 
 function neuePerson() {
-  bearbeiteteId.value = null;
-  formular.vorname = '';
-  formular.nachname = '';
-  formular.rolle = 'Mitarbeiter';
-  formular.wochenstunden = '';
+  bearbeitetePerson.value = null;
   formularSichtbar.value = true;
 }
 
 function bearbeiten(p: Person) {
-  bearbeiteteId.value = p.id;
-  formular.vorname = p.vorname;
-  formular.nachname = p.nachname;
-  formular.rolle = p.rolle;
-  formular.wochenstunden = p.wochenstunden ?? '';
+  bearbeitetePerson.value = p;
   formularSichtbar.value = true;
 }
 
-async function speichern() {
-  await store.personSpeichern({
-    id: bearbeiteteId.value ?? undefined,
-    vorname: formular.vorname.trim(),
-    nachname: formular.nachname.trim(),
-    rolle: formular.rolle,
-    wochenstunden: formular.wochenstunden === '' ? null : Number(formular.wochenstunden),
-  });
-  formularSichtbar.value = false;
+function haeufigkeitsText(p: Person, dienstartId: (typeof DIENSTARTEN)[number]['id']): string {
+  const h = p.haeufigkeiten[dienstartId];
+  if (!h || h.maximum === 0) return '—';
+  return `${h.soll} / ${h.maximum}`;
+}
+
+function abwesenheitenTooltip(p: Person): string {
+  return p.abwesenheiten
+    .map((a) => `${abwesenheitsLabel(a.typ)}: ${formatDatum(a.von)} – ${formatDatum(a.bis)}`)
+    .join('\n');
+}
+
+async function aktivUmschalten(p: Person) {
+  await store.personAktivSetzen(p.id, !p.aktiv);
 }
 
 async function loeschen(p: Person) {
-  if (!confirm(`${personName(p)} wirklich löschen?`)) return;
+  if (
+    !confirm(
+      `${personName(p)} wirklich löschen?\n\nAchtung: Auch alle zugewiesenen Dienste dieser Person werden entfernt. ` +
+        `Soll die Person nur nicht mehr verplant werden, ist „Deaktivieren" die bessere Wahl.`,
+    )
+  )
+    return;
   await store.personLoeschen(p.id);
 }
 </script>
@@ -59,64 +61,71 @@ async function loeschen(p: Person) {
 <template>
   <div class="page-header">
     <h1>Personen</h1>
-    <button class="btn btn-primary" @click="neuePerson">+ Person hinzufügen</button>
+    <div class="page-header-controls">
+      <label v-if="anzahlInaktive > 0" class="checkbox-label">
+        <input v-model="inaktiveAnzeigen" type="checkbox" />
+        Inaktive anzeigen ({{ anzahlInaktive }})
+      </label>
+      <button class="btn btn-primary" @click="neuePerson">+ Person hinzufügen</button>
+    </div>
   </div>
 
-  <div v-if="formularSichtbar" class="card">
-    <h2>{{ bearbeiteteId ? 'Person bearbeiten' : 'Neue Person' }}</h2>
-    <form @submit.prevent="speichern">
-      <div class="form-row">
-        <div class="form-group">
-          <label for="person-vorname">Vorname</label>
-          <input id="person-vorname" v-model="formular.vorname" type="text" required />
-        </div>
-        <div class="form-group">
-          <label for="person-nachname">Nachname</label>
-          <input id="person-nachname" v-model="formular.nachname" type="text" required />
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label for="person-rolle">Rolle</label>
-          <select id="person-rolle" v-model="formular.rolle">
-            <option>Mitarbeiter</option>
-            <option>Teamleiter</option>
-            <option>Azubi</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="person-stunden">Wochenstunden</label>
-          <input id="person-stunden" v-model="formular.wochenstunden" type="number" min="1" max="60" />
-        </div>
-      </div>
-      <div class="form-actions">
-        <button type="submit" class="btn btn-primary">Speichern</button>
-        <button type="button" class="btn btn-secondary" @click="formularSichtbar = false">Abbrechen</button>
-      </div>
-    </form>
-  </div>
+  <PersonForm
+    v-if="formularSichtbar"
+    :key="bearbeitetePerson?.id ?? 'neu'"
+    :person="bearbeitetePerson"
+    @gespeichert="formularSichtbar = false"
+    @abgebrochen="formularSichtbar = false"
+  />
 
   <div class="card">
     <table class="table">
       <thead>
         <tr>
           <th>Name</th>
-          <th>Rolle</th>
-          <th>Wochenstunden</th>
+          <th v-for="d in DIENSTARTEN" :key="d.id" :title="`Soll / Max pro Monat`">
+            {{ d.name }}
+          </th>
+          <th>Abwesenheiten</th>
+          <th>Status</th>
           <th>Aktionen</th>
         </tr>
       </thead>
       <tbody>
-        <tr v-if="store.personen.length === 0">
-          <td colspan="4" class="empty-state">Noch keine Personen angelegt.</td>
+        <tr v-if="sichtbarePersonen.length === 0">
+          <td :colspan="DIENSTARTEN.length + 4" class="empty-state">
+            Noch keine Personen angelegt.
+          </td>
         </tr>
-        <tr v-for="p in store.personen" :key="p.id">
-          <td>{{ personName(p) }}</td>
-          <td><span class="badge" :class="rollenBadge[p.rolle]">{{ p.rolle }}</span></td>
-          <td>{{ p.wochenstunden ? p.wochenstunden + ' h/Woche' : '–' }}</td>
+        <tr v-for="p in sichtbarePersonen" :key="p.id" :class="{ 'zeile-inaktiv': !p.aktiv }">
+          <td>
+            {{ personName(p) }}
+            <span
+              v-if="p.aktiv && !machtIrgendeinenDienst(p)"
+              class="badge badge-orange"
+              title="Bei allen Diensten ist Max 0 — diese Person wird nicht verplant."
+            >
+              keine Dienste
+            </span>
+          </td>
+          <td v-for="d in DIENSTARTEN" :key="d.id">{{ haeufigkeitsText(p, d.id) }}</td>
+          <td>
+            <span v-if="p.abwesenheiten.length === 0">–</span>
+            <span v-else class="abwesenheit-anzahl" :title="abwesenheitenTooltip(p)">
+              {{ p.abwesenheiten.length }} 📅
+            </span>
+          </td>
+          <td>
+            <span class="badge" :class="p.aktiv ? 'badge-green' : 'badge-gray'">
+              {{ p.aktiv ? 'aktiv' : 'inaktiv' }}
+            </span>
+          </td>
           <td>
             <div class="btn-group">
               <button class="btn btn-secondary btn-sm" @click="bearbeiten(p)">Bearbeiten</button>
+              <button class="btn btn-secondary btn-sm" @click="aktivUmschalten(p)">
+                {{ p.aktiv ? 'Deaktivieren' : 'Aktivieren' }}
+              </button>
               <button class="btn btn-danger btn-sm" @click="loeschen(p)">Löschen</button>
             </div>
           </td>

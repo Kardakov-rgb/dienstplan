@@ -335,3 +335,79 @@ td.zelle-offen { cursor: default; }
   .form-row { grid-template-columns: 1fr; }
   .page-header { flex-direction: column; align-items: flex-start; }
 }
+
+/* ===== PERSONEN: HÄUFIGKEITEN & ABWESENHEITEN ===== */
+.form-section-title {
+  font-size: .95rem;
+  font-weight: 600;
+  margin: 1.25rem 0 .35rem;
+}
+
+.form-hint {
+  font-size: .8rem;
+  color: var(--text-muted);
+  margin-bottom: .75rem;
+}
+
+.form-error {
+  font-size: .8rem;
+  color: var(--danger);
+  font-weight: 600;
+  margin: .35rem 0;
+}
+
+.haeufigkeit-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, auto) auto 70px auto 70px;
+  align-items: center;
+  gap: .5rem .75rem;
+  margin-bottom: .5rem;
+}
+
+.haeufigkeit-grid label {
+  font-size: .8rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+.haeufigkeit-grid input {
+  padding: .35rem .5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .9rem;
+}
+
+.haeufigkeit-name { font-weight: 600; font-size: .9rem; }
+
+.abwesenheit-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.abwesenheit-row select,
+.abwesenheit-row input {
+  padding: .35rem .5rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: .9rem;
+}
+
+.abwesenheit-bis { font-size: .85rem; color: var(--text-muted); }
+
+.abwesenheit-anzahl { cursor: help; }
+
+.badge-gray { background: #e2e8f0; color: #475569; }
+
+.zeile-inaktiv td { opacity: .55; }
+
+.checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  font-size: .85rem;
+  color: var(--text-muted);
+  cursor: pointer;
+}
