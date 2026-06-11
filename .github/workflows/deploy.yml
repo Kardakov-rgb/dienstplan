@@ -1,9 +1,10 @@
-# Baut die Vue-App (inkl. Tests + Typprüfung) und veröffentlicht dist/ auf GitHub Pages
+# Baut die Vue-App (inkl. Tests + Typprüfung) auf jedem Branch-Push;
+# veröffentlicht auf GitHub Pages wird nur nach Merge auf main.
 name: Build & Deploy to Pages
 
 on:
   push:
-    branches: ["claude/happy-euler-8pt9ax"]
+    branches: ["main", "claude/**"]
   workflow_dispatch:
 
 permissions:
@@ -42,6 +43,7 @@ jobs:
           path: dist
   deploy:
     needs: build
+    if: github.ref == 'refs/heads/main'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
