@@ -6,9 +6,7 @@
  * (Schlüssel `dp_personen`; die alten Von/Bis-Schichten unter
  * `dp_schichten` sind fachlich obsolet und werden verworfen).
  */
-import type { Person } from '../../domain/types';
 import type { DatenSpeicher, GespeicherteDaten } from './port';
-import { AKTUELLE_SCHEMA_VERSION } from './port';
 
 const SCHLUESSEL = 'dienstplan_daten';
 const LEGACY_PERSONEN = 'dp_personen';
@@ -18,24 +16,24 @@ interface LegacyPerson {
   id: number;
   vorname: string;
   nachname: string;
-  rolle: Person['rolle'];
-  stunden: number | null;
 }
 
+/**
+ * Erzeugt bewusst Daten mit schemaVersion 1 (der Gestalt des Grundgerüsts);
+ * die Migrationskette in application/migrations.ts hebt sie beim Laden an.
+ */
 function importiereLegacy(): GespeicherteDaten | null {
   const roh = localStorage.getItem(LEGACY_PERSONEN);
   if (!roh) return null;
 
   const alte = JSON.parse(roh) as LegacyPerson[];
-  const personen: Person[] = alte.map((p) => ({
+  const personen = alte.map((p) => ({
     id: String(p.id),
     vorname: p.vorname,
     nachname: p.nachname,
-    rolle: p.rolle ?? 'Mitarbeiter',
-    wochenstunden: p.stunden ?? null,
   }));
 
-  return { schemaVersion: AKTUELLE_SCHEMA_VERSION, personen, zuweisungen: [] };
+  return { schemaVersion: 1, personen, zuweisungen: [] } as unknown as GespeicherteDaten;
 }
 
 export function erzeugeLocalStorageSpeicher(): DatenSpeicher {

@@ -9,18 +9,35 @@ export type ISODate = string;
 
 export type DienstartId = 'vordergrund' | 'visite' | 'davinci';
 
+export type AbwesenheitsTyp = 'urlaub' | 'krank' | 'fortbildung' | 'wunschfrei';
+
+/** Zeitraum, in dem eine Person nicht eingeplant werden darf. Grenztage inklusive. */
+export interface Abwesenheit {
+  id: string;
+  typ: AbwesenheitsTyp;
+  von: ISODate;
+  bis: ISODate;
+}
+
 /**
- * Person, die Dienste übernehmen kann.
- * Hinweis: rolle/wochenstunden stammen noch aus dem Grundgerüst und werden
- * in Phase 2 durch dienstbezogene Eigenschaften (Berechtigung, Häufigkeit,
- * Abwesenheiten) ersetzt.
+ * Häufigkeit einer Dienstart pro Monat für eine Person.
+ * `maximum` ist eine harte Obergrenze; 0 bedeutet: darf diesen Dienst nicht machen.
+ * `soll` ist das weiche Ziel des Generators; es gilt stets soll ≤ maximum.
  */
+export interface DienstHaeufigkeit {
+  soll: number;
+  maximum: number;
+}
+
+/** Person, die Dienste übernehmen kann. */
 export interface Person {
   id: string;
   vorname: string;
   nachname: string;
-  rolle: 'Mitarbeiter' | 'Teamleiter' | 'Azubi';
-  wochenstunden: number | null;
+  /** Inaktive Personen bleiben für die Historie erhalten, werden aber nicht mehr verplant. */
+  aktiv: boolean;
+  haeufigkeiten: Record<DienstartId, DienstHaeufigkeit>;
+  abwesenheiten: Abwesenheit[];
 }
 
 /**

@@ -5,12 +5,36 @@
  */
 import type { GespeicherteDaten } from '../infrastructure/storage/port';
 import { AKTUELLE_SCHEMA_VERSION } from '../infrastructure/storage/port';
+import { leereHaeufigkeiten } from '../domain/person';
 
 type Migration = (daten: GespeicherteDaten) => GespeicherteDaten;
 
+/** Personengestalt bis Schema-Version 1 (Grundgerüst: Rolle + Wochenstunden). */
+interface PersonV1 {
+  id: string;
+  vorname: string;
+  nachname: string;
+  rolle?: string;
+  wochenstunden?: number | null;
+}
+
 /** Index = Ausgangsversion. migrationen[1] hebt Version 1 auf 2 usw. */
 const migrationen: Record<number, Migration> = {
-  // Phase 2 wird hier die erste echte Migration ergänzen (Person-Umbau).
+  // v1 → v2: Rolle/Wochenstunden entfallen; stattdessen aktiv-Flag,
+  // Häufigkeiten je Dienstart (sicherer Default 0/0 = wird nicht verplant)
+  // und Abwesenheiten.
+  1: (daten) => ({
+    ...daten,
+    schemaVersion: 2,
+    personen: (daten.personen as unknown as PersonV1[]).map((p) => ({
+      id: p.id,
+      vorname: p.vorname,
+      nachname: p.nachname,
+      aktiv: true,
+      haeufigkeiten: leereHaeufigkeiten(),
+      abwesenheiten: [],
+    })),
+  }),
 };
 
 export function migriere(daten: GespeicherteDaten): GespeicherteDaten {
