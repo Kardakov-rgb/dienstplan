@@ -13,6 +13,8 @@
   --border:       #e2e8f0;
   --text:         #1e293b;
   --text-muted:   #64748b;
+  --wochenende:   #eef2ff;
+  --feiertag:     #fef3c7;
   --radius:       8px;
   --shadow:       0 1px 3px rgba(0,0,0,.1), 0 1px 2px rgba(0,0,0,.06);
 }
@@ -64,10 +66,7 @@ body {
 .nav-link.active { background: rgba(255,255,255,.2);  color: #fff; font-weight: 600; }
 
 /* ===== LAYOUT ===== */
-.container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
-
-.page        { display: none; }
-.page.active { display: block; }
+.container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
 
 .page-header {
   display: flex;
@@ -98,8 +97,6 @@ body {
 }
 
 .card h2 { font-size: 1.1rem; margin-bottom: 1rem; }
-
-.hidden { display: none !important; }
 
 /* ===== FORMS ===== */
 .form-row {
@@ -202,7 +199,7 @@ body {
   color: var(--text-muted);
   font-style: italic;
   text-align: center;
-  padding: 2rem !important;
+  padding: 2rem;
 }
 
 .btn-group { display: flex; gap: .4rem; }
@@ -220,82 +217,96 @@ body {
 .badge-green  { background: #dcfce7; color: #15803d; }
 .badge-orange { background: #ffedd5; color: #c2410c; }
 
-/* ===== CALENDAR ===== */
+/* ===== DIENSTPLAN-TABELLE ===== */
 .week-label {
   font-weight: 600;
-  min-width: 8rem;
+  min-width: 9rem;
   text-align: center;
 }
 
 .calendar-grid-wrapper { overflow-x: auto; }
 
-.calendar-table {
-  width: 100%;
+.plan-table {
   border-collapse: collapse;
-  min-width: 700px;
-  font-size: .85rem;
-}
-
-.calendar-table th {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  padding: .5rem .6rem;
-  text-align: center;
-  font-weight: 600;
   font-size: .8rem;
 }
 
-.calendar-table td {
+.plan-table th,
+.plan-table td {
   border: 1px solid var(--border);
-  padding: .4rem .5rem;
-  vertical-align: top;
-  min-width: 110px;
+  padding: .35rem .3rem;
+  text-align: center;
+  min-width: 34px;
 }
 
-.calendar-table td.person-col {
+.plan-table thead th {
+  background: var(--bg);
+  font-weight: 600;
+  position: relative;
+}
+
+.plan-wochentag {
+  font-weight: 400;
+  font-size: .7rem;
+  color: var(--text-muted);
+}
+
+.plan-feiertag-punkt {
+  position: absolute;
+  top: 1px;
+  right: 4px;
+  color: var(--warning);
+  font-size: .8rem;
+}
+
+.plan-dienst-col {
+  text-align: left !important;
   font-weight: 600;
   background: #f8fafc;
   white-space: nowrap;
-  min-width: 130px;
+  padding: .35rem .6rem !important;
 }
 
-.shift-chip {
+th.tag-wochenende, td.tag-wochenende { background: var(--wochenende); }
+th.tag-feiertag,   td.tag-feiertag   { background: var(--feiertag); }
+
+td.zelle-aus {
+  background-image: repeating-linear-gradient(
+    45deg, transparent, transparent 4px, rgba(100,116,139,.12) 4px, rgba(100,116,139,.12) 8px
+  );
+  color: var(--text-muted);
+}
+
+td.zelle-offen { cursor: default; }
+
+.zelle-aus-marker { color: #cbd5e1; }
+
+.plan-legende {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: #dbeafe;
-  color: #1e40af;
-  border-radius: 4px;
-  padding: .2rem .4rem;
-  margin-bottom: .2rem;
-  font-size: .78rem;
-  gap: .3rem;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+  margin-top: .9rem;
+  font-size: .8rem;
+  color: var(--text-muted);
 }
 
-.shift-chip .chip-time { font-weight: 600; }
+.legende-item { display: inline-flex; align-items: center; gap: .4rem; }
 
-.shift-chip .chip-actions {
-  display: flex;
-  gap: .15rem;
-  opacity: 0;
-  transition: opacity .15s;
-}
-
-.shift-chip:hover .chip-actions { opacity: 1; }
-
-.chip-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 1px 3px;
+.legende-farbe {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--border);
   border-radius: 3px;
-  font-size: .75rem;
-  line-height: 1;
 }
 
-.chip-btn:hover { background: rgba(0,0,0,.1); }
+.legende-farbe.zelle-aus {
+  background-image: repeating-linear-gradient(
+    45deg, transparent, transparent 3px, rgba(100,116,139,.2) 3px, rgba(100,116,139,.2) 6px
+  );
+}
 
-/* ===== STATISTICS ===== */
+/* ===== STATISTIK ===== */
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
