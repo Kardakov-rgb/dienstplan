@@ -7,7 +7,12 @@ import { personAbwesend } from './personAbwesend';
 import { dienstNichtErlaubt } from './dienstNichtErlaubt';
 import { einDienstProTag } from './einDienstProTag';
 import { maximumProMonat } from './maximumProMonat';
+import { vordergrundAbstand } from './vordergrundAbstand';
+import { urlaubsRandWochenende } from './urlaubsRandWochenende';
+import { maxZweiWochenenden } from './maxZweiWochenenden';
+import { maxEineVisiteProMonat } from './maxEineVisiteProMonat';
 import { sollUeberschreitung } from './sollUeberschreitung';
+import { visiteRandtage } from './visiteRandtage';
 import { gesamtFairness } from './gesamtFairness';
 import { dienstAbstand } from './dienstAbstand';
 import { visiteWochenendBlock } from './visiteWochenendBlock';
@@ -17,10 +22,15 @@ export const ALLE_REGELN: readonly Regel[] = [
   personAbwesend,
   einDienstProTag,
   maximumProMonat,
+  vordergrundAbstand,
+  urlaubsRandWochenende,
+  maxZweiWochenenden,
+  maxEineVisiteProMonat,
 ];
 
 export const WEICHE_REGELN: readonly BewertungsRegel[] = [
   sollUeberschreitung,
+  visiteRandtage,
   visiteWochenendBlock,
   dienstAbstand,
   gesamtFairness,

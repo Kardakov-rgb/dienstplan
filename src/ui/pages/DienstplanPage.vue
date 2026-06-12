@@ -16,7 +16,7 @@ import { personName } from '../../domain/types';
 import type { DienstartId, ISODate } from '../../domain/types';
 import { harteVerstoesse } from '../../domain/rules';
 import type { GenerierungsErgebnis } from '../../domain/generator/generator';
-import { dienstart } from '../../domain/dienste';
+import { dienstart, istGenerierbar } from '../../domain/dienste';
 import { formatDatum } from '../../domain/datum';
 import ZuweisungsPanel from '../components/ZuweisungsPanel.vue';
 
@@ -94,7 +94,9 @@ function zellKlassen(datum: ISODate, dienstartId: DienstartId): string[] {
 
   const klassen = [...tagKlassen(datum), 'zelle-offen'];
   const info = zellInfo(datum, dienstartId);
-  if (!info.zuweisung) klassen.push('zelle-unbesetzt');
+  if (!info.zuweisung) {
+    klassen.push(istGenerierbar(dienst, datum) ? 'zelle-unbesetzt' : 'zelle-optional');
+  }
   else if (info.verstoesse.length > 0) klassen.push('zelle-verstoss');
   if (auswahl.value?.datum === datum && auswahl.value?.dienstartId === dienstartId) {
     klassen.push('zelle-ausgewaehlt');
@@ -106,8 +108,10 @@ function zellTitel(datum: ISODate, dienstartId: DienstartId): string {
   const teile: string[] = [];
   const feiertag = feiertagsName(datum);
   if (feiertag) teile.push(feiertag);
+  const dienst = DIENSTARTEN.find((d) => d.id === dienstartId)!;
   const info = zellInfo(datum, dienstartId);
   if (info.person) teile.push(personName(info.person));
+  else if (!istGenerierbar(dienst, datum)) teile.push('i.d.R. kein Dienst — nur manuell besetzbar');
   else teile.push('unbesetzt');
   for (const v of info.verstoesse) teile.push(`⚠ ${v.meldung}`);
   return teile.join('\n');
@@ -124,9 +128,16 @@ function zelleKlick(datum: ISODate, dienstartId: DienstartId) {
 const anzahlUnbesetzt = computed(
   () =>
     tage.value.flatMap((tag) =>
-      DIENSTARTEN.filter((d) => d.findetStattAm(tag) && !store.zuweisungFuer(tag, d.id)),
+      DIENSTARTEN.filter(
+        (d) => istGenerierbar(d, tag) && !store.zuweisungFuer(tag, d.id),
+      ),
     ).length,
 );
+
+function istOptional(datum: ISODate, dienstartId: DienstartId): boolean {
+  const dienst = DIENSTARTEN.find((d) => d.id === dienstartId)!;
+  return dienst.findetStattAm(datum) && !istGenerierbar(dienst, datum);
+}
 
 watch([() => store.personen.length], () => {
   // Wird die letzte Person gelöscht, wäre das Panel verwaist.
@@ -216,6 +227,9 @@ watch([() => store.personen.length], () => {
                 <span class="zelle-kuerzel">{{ personKuerzel(zellInfo(tag, dienst.id).person!) }}</span>
                 <span v-if="zellInfo(tag, dienst.id).verstoesse.length > 0" class="zelle-warnung">⚠</span>
               </template>
+              <template v-else-if="istOptional(tag, dienst.id)">
+                <span class="zelle-optional-marker">·</span>
+              </template>
               <template v-else>
                 <span class="zelle-unbesetzt-marker">!</span>
               </template>
@@ -229,6 +243,7 @@ watch([() => store.personen.length], () => {
       <span class="legende-item"><span class="legende-farbe tag-feiertag"></span> Feiertag (NRW)</span>
       <span class="legende-item"><span class="legende-farbe zelle-aus"></span> Dienst findet nicht statt</span>
       <span class="legende-item"><span class="legende-farbe zelle-unbesetzt"></span> unbesetzt</span>
+      <span class="legende-item"><span class="legende-farbe zelle-optional"></span> nur manuell (z.B. Feiertags-Visite)</span>
       <span class="legende-item">⚠ Regelverstoß</span>
     </p>
     <p class="form-hint">
