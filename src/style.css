@@ -411,3 +411,75 @@ td.zelle-offen { cursor: default; }
   color: var(--text-muted);
   cursor: pointer;
 }
+
+/* ===== DIENSTPLAN: BESETZUNG (Phase 3) ===== */
+td.zelle-offen { cursor: pointer; }
+td.zelle-offen:hover { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+td.zelle-unbesetzt { background: #fee2e2; }
+
+.zelle-unbesetzt-marker {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+td.zelle-verstoss {
+  outline: 2px solid var(--warning);
+  outline-offset: -2px;
+}
+
+td.zelle-ausgewaehlt {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+  background: #dbeafe;
+}
+
+.zelle-kuerzel { font-weight: 600; }
+
+.zelle-warnung { font-size: .7rem; margin-left: 1px; }
+
+.legende-farbe.zelle-unbesetzt { background: #fee2e2; }
+
+.badge-red { background: #fee2e2; color: var(--danger); }
+
+/* Besetzungs-Panel */
+.zuweisungs-kopf {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: .75rem;
+}
+
+.zuweisungs-kopf h2 { margin-bottom: 0; }
+
+.zuweisungs-aktuell {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  font-size: .9rem;
+  margin-bottom: .9rem;
+}
+
+.zuweisungs-unbesetzt-hinweis { color: var(--danger); font-weight: 600; }
+
+.kandidaten-liste {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: .45rem;
+}
+
+.kandidat {
+  display: flex;
+  align-items: baseline;
+  gap: .6rem;
+  flex-wrap: wrap;
+}
+
+.kandidat-knopf { min-width: 11rem; justify-content: flex-start; }
+
+.kandidat-warnung {
+  font-size: .8rem;
+  color: var(--warning);
+}

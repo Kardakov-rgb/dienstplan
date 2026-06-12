@@ -36,6 +36,11 @@ export function machtIrgendeinenDienst(person: Person): boolean {
   return DIENSTARTEN.some((d) => darfDienst(person, d.id));
 }
 
+/** Kurzzeichen für enge Plan-Zellen, z.B. "EM" für Erika Muster. */
+export function personKuerzel(person: Person): string {
+  return `${person.vorname.charAt(0)}${person.nachname.charAt(0)}`.toUpperCase();
+}
+
 /** Liefert die (erste) Abwesenheit, die das Datum abdeckt, sonst null. Grenztage inklusive. */
 export function abwesenheitAm(person: Person, datum: ISODate): Abwesenheit | null {
   return person.abwesenheiten.find((a) => a.von <= datum && datum <= a.bis) ?? null;

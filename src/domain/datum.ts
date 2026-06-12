@@ -46,6 +46,12 @@ export function addiereTage(datum: ISODate, tage: number): ISODate {
   return toISODate(d.getFullYear(), d.getMonth() + 1, d.getDate());
 }
 
+/** Liegt das Datum im angegebenen Monat? */
+export function imMonat(datum: ISODate, jahr: number, monat: number): boolean {
+  const z = zerlege(datum);
+  return z.jahr === jahr && z.monat === monat;
+}
+
 export const WOCHENTAG_KURZ = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'] as const;
 
 export const MONATS_NAMEN = [

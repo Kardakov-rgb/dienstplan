@@ -4,7 +4,7 @@
  * Stores; gespeichert wird automatisch über den injizierten DatenSpeicher.
  */
 import { defineStore } from 'pinia';
-import type { Person, Zuweisung } from '../domain/types';
+import type { DienstartId, ISODate, Person, Zuweisung } from '../domain/types';
 import { DIENSTARTEN } from '../domain/dienste';
 import type { DatenSpeicher } from '../infrastructure/storage/port';
 import { AKTUELLE_SCHEMA_VERSION, leereDaten } from '../infrastructure/storage/port';
@@ -46,6 +46,9 @@ export const useDatenStore = defineStore('daten', {
     person: (state) => (id: string) => state.personen.find((p) => p.id === id),
     /** Nur aktive Personen — Grundlage für Plan-Ansicht und Generator. */
     aktivePersonen: (state) => state.personen.filter((p) => p.aktiv),
+    /** Die Besetzung einer Plan-Zelle (höchstens eine pro Tag × Dienstart). */
+    zuweisungFuer: (state) => (datum: ISODate, dienstartId: DienstartId) =>
+      state.zuweisungen.find((z) => z.datum === datum && z.dienstartId === dienstartId),
   },
 
   actions: {
@@ -76,6 +79,25 @@ export const useDatenStore = defineStore('daten', {
       } else {
         this.personen.push({ ...person, id: crypto.randomUUID() });
       }
+      await this.speichern();
+    },
+
+    /**
+     * Besetzt eine Plan-Zelle (ersetzt eine vorhandene Besetzung).
+     * Manuelle Zuweisungen sind `fixiert` — der Generator überschreibt sie nie.
+     */
+    async zuweisungSetzen(datum: ISODate, dienstartId: DienstartId, personId: string) {
+      this.zuweisungen = this.zuweisungen.filter(
+        (z) => !(z.datum === datum && z.dienstartId === dienstartId),
+      );
+      this.zuweisungen.push({ id: crypto.randomUUID(), datum, dienstartId, personId, fixiert: true });
+      await this.speichern();
+    },
+
+    async zuweisungEntfernen(datum: ISODate, dienstartId: DienstartId) {
+      this.zuweisungen = this.zuweisungen.filter(
+        (z) => !(z.datum === datum && z.dienstartId === dienstartId),
+      );
       await this.speichern();
     },
 
