@@ -513,3 +513,59 @@ td.zelle-optional {
     45deg, transparent, transparent 3px, rgba(217,119,6,.25) 3px, rgba(217,119,6,.25) 6px
   );
 }
+
+/* ===== STATISTIK (Phase 6) ===== */
+.stat-spalten-hinweis {
+  font-weight: 400;
+  font-size: .7rem;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.stat-tabelle td { vertical-align: top; }
+
+.fairness-balken {
+  height: 5px;
+  background: var(--bg);
+  border-radius: 3px;
+  margin-top: .3rem;
+  max-width: 90px;
+}
+
+.fairness-fuellung {
+  height: 100%;
+  border-radius: 3px;
+  transition: width .2s;
+}
+
+.fairness-fuellung.dienst-vordergrund { background: var(--primary); }
+.fairness-fuellung.dienst-visite      { background: var(--success); }
+.fairness-fuellung.dienst-davinci     { background: var(--warning); }
+
+/* ===== DRUCKANSICHT ===== */
+@media print {
+  .navbar,
+  .btn,
+  .page-header-controls select,
+  .form-hint,
+  .plan-legende { display: none !important; }
+
+  body { background: #fff; }
+
+  .container { max-width: none; padding: 0; }
+
+  .card {
+    box-shadow: none;
+    border: none;
+    padding: 0;
+    margin-bottom: 1rem;
+  }
+
+  .plan-table th, .plan-table td,
+  .table th, .table td {
+    border: 1px solid #999;
+  }
+
+  /* Hintergrundfarben (Wochenende/Feiertag/unbesetzt) mitdrucken */
+  * { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+}
