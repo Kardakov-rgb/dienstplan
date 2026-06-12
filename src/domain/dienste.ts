@@ -10,6 +10,8 @@ import { istFeiertag } from './feiertage';
 export interface Dienstart {
   id: DienstartId;
   name: string;
+  /** Kurzzeichen für enge Darstellungen (Handy-Ansicht). */
+  kuerzel: string;
   /** Kurzbeschreibung für Tooltips/Legende. */
   beschreibung: string;
   /** CSS-Farbklasse für die Darstellung im Plan. */
@@ -38,6 +40,7 @@ export const DIENSTARTEN: readonly Dienstart[] = [
   {
     id: 'vordergrund',
     name: 'Vordergrund',
+    kuerzel: 'VG',
     beschreibung: '24-Stunden-Dienst, findet an jedem Tag statt.',
     farbKlasse: 'dienst-vordergrund',
     findetStattAm: () => true,
@@ -45,6 +48,7 @@ export const DIENSTARTEN: readonly Dienstart[] = [
   {
     id: 'visite',
     name: 'Visitendienst',
+    kuerzel: 'VD',
     beschreibung:
       'Samstags und sonntags (Sa+So im Normalfall dieselbe Person). An Wochentags-Feiertagen ' +
       'nur manuell eintragbar — i.d.R. findet dort keine Visite statt.',
@@ -61,6 +65,7 @@ export const DIENSTARTEN: readonly Dienstart[] = [
   {
     id: 'davinci',
     name: 'Davincidienst',
+    kuerzel: 'DaV',
     beschreibung: 'Nur freitags; entfällt, wenn der Freitag ein Feiertag ist.',
     farbKlasse: 'dienst-davinci',
     findetStattAm: (datum) => wochentag(datum) === FREITAG && !istFeiertag(datum),

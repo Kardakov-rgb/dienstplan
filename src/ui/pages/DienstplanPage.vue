@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useDatenStore } from '../../application/store';
 import { DIENSTARTEN } from '../../domain/dienste';
 import {
@@ -19,8 +19,12 @@ import type { GenerierungsErgebnis } from '../../domain/generator/generator';
 import { dienstart, istGenerierbar } from '../../domain/dienste';
 import { formatDatum } from '../../domain/datum';
 import ZuweisungsPanel from '../components/ZuweisungsPanel.vue';
+import { HANDY_BREITE, useMediaQuery } from '../useMediaQuery';
 
 const store = useDatenStore();
+
+/** Handy-Ansicht: Tage als Zeilen statt 31 Spalten. */
+const istSchmal = useMediaQuery(HANDY_BREITE);
 
 const heute = new Date();
 const jahr = ref(heute.getFullYear());
@@ -123,6 +127,15 @@ function zelleKlick(datum: ISODate, dienstartId: DienstartId) {
   const istGleicheZelle =
     auswahl.value?.datum === datum && auswahl.value?.dienstartId === dienstartId;
   auswahl.value = istGleicheZelle ? null : { datum, dienstartId };
+  if (auswahl.value) {
+    // Das Panel steht über der Tabelle — besonders am Handy dorthin scrollen.
+    void nextTick(() => {
+      document.querySelector('.zuweisungs-panel')?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest',
+      });
+    });
+  }
 }
 
 const anzahlUnbesetzt = computed(
@@ -193,7 +206,8 @@ watch([() => store.personen.length], () => {
   />
 
   <div class="card">
-    <div class="calendar-grid-wrapper">
+    <!-- Breite Ansicht: Dienste als Zeilen, Tage als Spalten -->
+    <div v-if="!istSchmal" class="calendar-grid-wrapper">
       <table class="plan-table">
         <thead>
           <tr>
@@ -238,6 +252,47 @@ watch([() => store.personen.length], () => {
         </tbody>
       </table>
     </div>
+
+    <!-- Handy-Ansicht: Tage als Zeilen, Dienste als Spalten -->
+    <table v-else class="plan-table plan-table-mobil">
+      <thead>
+        <tr>
+          <th class="plan-tag-col">Tag</th>
+          <th v-for="dienst in DIENSTARTEN" :key="dienst.id" :title="dienst.name">
+            {{ dienst.kuerzel }}
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="tag in tage" :key="tag">
+          <td class="plan-tag-col" :class="tagKlassen(tag)" :title="feiertagsName(tag) ?? undefined">
+            {{ WOCHENTAG_KURZ[wochentag(tag)] }} {{ String(zerlege(tag).tag).padStart(2, '0') }}.
+            <span v-if="feiertagsName(tag)" class="plan-feiertag-punkt" aria-hidden="true">•</span>
+          </td>
+          <td
+            v-for="dienst in DIENSTARTEN"
+            :key="dienst.id"
+            :class="zellKlassen(tag, dienst.id)"
+            :title="dienst.findetStattAm(tag) ? zellTitel(tag, dienst.id) : (feiertagsName(tag) ?? undefined)"
+            @click="zelleKlick(tag, dienst.id)"
+          >
+            <template v-if="!dienst.findetStattAm(tag)">
+              <span class="zelle-aus-marker">–</span>
+            </template>
+            <template v-else-if="zellInfo(tag, dienst.id).person">
+              <span class="zelle-kuerzel">{{ personKuerzel(zellInfo(tag, dienst.id).person!) }}</span>
+              <span v-if="zellInfo(tag, dienst.id).verstoesse.length > 0" class="zelle-warnung">⚠</span>
+            </template>
+            <template v-else-if="istOptional(tag, dienst.id)">
+              <span class="zelle-optional-marker">·</span>
+            </template>
+            <template v-else>
+              <span class="zelle-unbesetzt-marker">!</span>
+            </template>
+          </td>
+        </tr>
+      </tbody>
+    </table>
     <p class="plan-legende">
       <span class="legende-item"><span class="legende-farbe tag-wochenende"></span> Wochenende</span>
       <span class="legende-item"><span class="legende-farbe tag-feiertag"></span> Feiertag (NRW)</span>
