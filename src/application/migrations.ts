@@ -33,7 +33,15 @@ const migrationen: Record<number, Migration> = {
       aktiv: true,
       haeufigkeiten: leereHaeufigkeiten(),
       abwesenheiten: [],
-    })),
+    })) as unknown as GespeicherteDaten['personen'],
+  }),
+
+  // v2 → v3: Vollzeit-Kennzeichen für den monatlichen Wochenend-Wechsel.
+  // Default false — die Wechsel-Regel greift erst nach bewusstem Ankreuzen.
+  2: (daten) => ({
+    ...daten,
+    schemaVersion: 3,
+    personen: daten.personen.map((p) => ({ ...p, vollzeit: p.vollzeit ?? false })),
   }),
 };
 

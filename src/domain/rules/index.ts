@@ -13,6 +13,7 @@ import { maxZweiWochenenden } from './maxZweiWochenenden';
 import { maxEineVisiteProMonat } from './maxEineVisiteProMonat';
 import { sollUeberschreitung } from './sollUeberschreitung';
 import { visiteRandtage } from './visiteRandtage';
+import { vollzeitWechsel } from './vollzeitWechsel';
 import { gesamtFairness } from './gesamtFairness';
 import { dienstAbstand } from './dienstAbstand';
 import { visiteWochenendBlock } from './visiteWochenendBlock';
@@ -32,6 +33,7 @@ export const WEICHE_REGELN: readonly BewertungsRegel[] = [
   sollUeberschreitung,
   visiteRandtage,
   visiteWochenendBlock,
+  vollzeitWechsel,
   dienstAbstand,
   gesamtFairness,
 ];

@@ -101,6 +101,13 @@ async function loeschen(p: Person) {
           <td>
             {{ personName(p) }}
             <span
+              v-if="p.vollzeit"
+              class="badge badge-blue"
+              title="Vollzeitkraft: monatlicher Wechsel der Wochenend-Muster"
+            >
+              VZ
+            </span>
+            <span
               v-if="p.aktiv && !machtIrgendeinenDienst(p)"
               class="badge badge-orange"
               title="Bei allen Diensten ist Max 0 — diese Person wird nicht verplant."

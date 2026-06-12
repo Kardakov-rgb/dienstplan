@@ -23,6 +23,7 @@ function initialeHaeufigkeiten(): Record<DienstartId, DienstHaeufigkeit> {
 const formular = reactive({
   vorname: props.person?.vorname ?? '',
   nachname: props.person?.nachname ?? '',
+  vollzeit: props.person?.vollzeit ?? false,
   haeufigkeiten: initialeHaeufigkeiten(),
   abwesenheiten: (props.person?.abwesenheiten ?? []).map((a) => ({ ...a })) as Abwesenheit[],
 });
@@ -61,6 +62,7 @@ async function speichern() {
     id: props.person?.id,
     vorname: formular.vorname.trim(),
     nachname: formular.nachname.trim(),
+    vollzeit: formular.vollzeit,
     aktiv: props.person?.aktiv ?? true,
     haeufigkeiten: formular.haeufigkeiten,
     abwesenheiten: formular.abwesenheiten,
@@ -83,6 +85,12 @@ async function speichern() {
           <input id="person-nachname" v-model="formular.nachname" type="text" required />
         </div>
       </div>
+
+      <label class="checkbox-label" style="margin-bottom: .25rem">
+        <input v-model="formular.vollzeit" type="checkbox" />
+        Vollzeitkraft — monatlicher Wechsel der Wochenend-Muster
+        (VG&nbsp;Freitag+Sonntag&nbsp;↔&nbsp;VG&nbsp;Samstag)
+      </label>
 
       <h3 class="form-section-title">Dienste pro Monat</h3>
       <p class="form-hint">
