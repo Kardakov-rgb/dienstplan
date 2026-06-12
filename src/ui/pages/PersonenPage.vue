@@ -7,6 +7,11 @@ import { DIENSTARTEN } from '../../domain/dienste';
 import { abwesenheitsLabel, machtIrgendeinenDienst } from '../../domain/person';
 import { formatDatum } from '../../domain/datum';
 import PersonForm from '../components/PersonForm.vue';
+import AppModal from '../components/AppModal.vue';
+import AppIcon from '../components/AppIcon.vue';
+import { frageBestaetigung } from '../dialog';
+import { zeigeToast } from '../toast';
+import { personFarbe } from '../farben';
 
 const store = useDatenStore();
 
@@ -44,17 +49,21 @@ function abwesenheitenTooltip(p: Person): string {
 
 async function aktivUmschalten(p: Person) {
   await store.personAktivSetzen(p.id, !p.aktiv);
+  zeigeToast(p.aktiv ? `${personName(p)} ist jetzt aktiv` : `${personName(p)} ist jetzt inaktiv`, 'info');
 }
 
 async function loeschen(p: Person) {
-  if (
-    !confirm(
-      `${personName(p)} wirklich löschen?\n\nAchtung: Auch alle zugewiesenen Dienste dieser Person werden entfernt. ` +
-        `Soll die Person nur nicht mehr verplant werden, ist „Deaktivieren" die bessere Wahl.`,
-    )
-  )
-    return;
+  const ok = await frageBestaetigung({
+    titel: 'Person löschen?',
+    text:
+      `${personName(p)} wird dauerhaft gelöscht — inklusive aller zugewiesenen Dienste.\n\n` +
+      `Soll die Person nur nicht mehr verplant werden, ist „Deaktivieren" die bessere Wahl.`,
+    bestaetigenText: 'Endgültig löschen',
+    gefaehrlich: true,
+  });
+  if (!ok) return;
   await store.personLoeschen(p.id);
+  zeigeToast('Person gelöscht', 'info');
 }
 </script>
 
@@ -66,80 +75,101 @@ async function loeschen(p: Person) {
         <input v-model="inaktiveAnzeigen" type="checkbox" />
         Inaktive anzeigen ({{ anzahlInaktive }})
       </label>
-      <button class="btn btn-primary" @click="neuePerson">+ Person hinzufügen</button>
+      <button class="btn btn-primary" @click="neuePerson">
+        <AppIcon name="plus" />
+        Person hinzufügen
+      </button>
     </div>
   </div>
 
-  <PersonForm
+  <AppModal
     v-if="formularSichtbar"
-    :key="bearbeitetePerson?.id ?? 'neu'"
-    :person="bearbeitetePerson"
-    @gespeichert="formularSichtbar = false"
-    @abgebrochen="formularSichtbar = false"
-  />
+    :titel="bearbeitetePerson ? 'Person bearbeiten' : 'Neue Person'"
+    :breite="640"
+    @schliessen="formularSichtbar = false"
+  >
+    <PersonForm
+      :key="bearbeitetePerson?.id ?? 'neu'"
+      :person="bearbeitetePerson"
+      @gespeichert="formularSichtbar = false"
+      @abgebrochen="formularSichtbar = false"
+    />
+  </AppModal>
 
   <div class="card">
-    <div class="tabelle-scroll">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th v-for="d in DIENSTARTEN" :key="d.id" :title="`Soll / Max pro Monat`">
-            {{ d.name }}
-          </th>
-          <th>Abwesenheiten</th>
-          <th>Status</th>
-          <th>Aktionen</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="sichtbarePersonen.length === 0">
-          <td :colspan="DIENSTARTEN.length + 4" class="empty-state">
-            Noch keine Personen angelegt.
-          </td>
-        </tr>
-        <tr v-for="p in sichtbarePersonen" :key="p.id" :class="{ 'zeile-inaktiv': !p.aktiv }">
-          <td>
-            {{ personName(p) }}
-            <span
-              v-if="p.vollzeit"
-              class="badge badge-blue"
-              title="Vollzeitkraft: monatlicher Wechsel der Wochenend-Muster"
-            >
-              VZ
-            </span>
-            <span
-              v-if="p.aktiv && !machtIrgendeinenDienst(p)"
-              class="badge badge-orange"
-              title="Bei allen Diensten ist Max 0 — diese Person wird nicht verplant."
-            >
-              keine Dienste
-            </span>
-          </td>
-          <td v-for="d in DIENSTARTEN" :key="d.id">{{ haeufigkeitsText(p, d.id) }}</td>
-          <td>
-            <span v-if="p.abwesenheiten.length === 0">–</span>
-            <span v-else class="abwesenheit-anzahl" :title="abwesenheitenTooltip(p)">
-              {{ p.abwesenheiten.length }} 📅
-            </span>
-          </td>
-          <td>
-            <span class="badge" :class="p.aktiv ? 'badge-green' : 'badge-gray'">
-              {{ p.aktiv ? 'aktiv' : 'inaktiv' }}
-            </span>
-          </td>
-          <td>
-            <div class="btn-group">
-              <button class="btn btn-secondary btn-sm" @click="bearbeiten(p)">Bearbeiten</button>
-              <button class="btn btn-secondary btn-sm" @click="aktivUmschalten(p)">
-                {{ p.aktiv ? 'Deaktivieren' : 'Aktivieren' }}
-              </button>
-              <button class="btn btn-danger btn-sm" @click="loeschen(p)">Löschen</button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+    <div v-if="sichtbarePersonen.length === 0" class="empty-state">
+      <strong>Noch keine Personen angelegt.</strong><br />
+      Lege zuerst dein Team an — mit Soll/Max je Dienstart und Abwesenheiten.
+      Danach kann der Dienstplan generiert werden.<br />
+      <button class="btn btn-primary" @click="neuePerson">
+        <AppIcon name="plus" />
+        Erste Person anlegen
+      </button>
+    </div>
+
+    <div v-else class="tabelle-scroll">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th v-for="d in DIENSTARTEN" :key="d.id" title="Soll / Max pro Monat">
+              {{ d.name }}
+            </th>
+            <th>Abwesenheiten</th>
+            <th>Status</th>
+            <th>Aktionen</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="p in sichtbarePersonen" :key="p.id" :class="{ 'zeile-inaktiv': !p.aktiv }">
+            <td>
+              <span class="person-punkt" :style="{ background: personFarbe(p.id) }"></span>
+              {{ personName(p) }}
+              <span
+                v-if="p.vollzeit"
+                class="badge badge-blue"
+                title="Vollzeitkraft: monatlicher Wechsel der Wochenend-Muster"
+              >
+                VZ
+              </span>
+              <span
+                v-if="p.aktiv && !machtIrgendeinenDienst(p)"
+                class="badge badge-orange"
+                title="Bei allen Diensten ist Max 0 — diese Person wird nicht verplant."
+              >
+                keine Dienste
+              </span>
+            </td>
+            <td v-for="d in DIENSTARTEN" :key="d.id">{{ haeufigkeitsText(p, d.id) }}</td>
+            <td>
+              <span v-if="p.abwesenheiten.length === 0">–</span>
+              <span v-else class="abwesenheit-anzahl" :title="abwesenheitenTooltip(p)">
+                {{ p.abwesenheiten.length }} 📅
+              </span>
+            </td>
+            <td>
+              <span class="badge" :class="p.aktiv ? 'badge-green' : 'badge-gray'">
+                {{ p.aktiv ? 'aktiv' : 'inaktiv' }}
+              </span>
+            </td>
+            <td>
+              <div class="btn-group">
+                <button class="btn btn-secondary btn-sm" @click="bearbeiten(p)">
+                  <AppIcon name="stift" :groesse="14" />
+                  Bearbeiten
+                </button>
+                <button class="btn btn-secondary btn-sm" @click="aktivUmschalten(p)">
+                  <AppIcon :name="p.aktiv ? 'pause' : 'abspielen'" :groesse="14" />
+                  {{ p.aktiv ? 'Deaktivieren' : 'Aktivieren' }}
+                </button>
+                <button class="btn btn-ghost-danger btn-sm" title="Löschen" @click="loeschen(p)">
+                  <AppIcon name="papierkorb" :groesse="14" />
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </template>

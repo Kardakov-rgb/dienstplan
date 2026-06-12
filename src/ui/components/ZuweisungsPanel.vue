@@ -6,6 +6,10 @@ import { personName } from '../../domain/types';
 import { dienstart } from '../../domain/dienste';
 import { harteVerstoesse } from '../../domain/rules';
 import { WOCHENTAG_KURZ, addiereTage, formatDatum, wochentag } from '../../domain/datum';
+import AppModal from './AppModal.vue';
+import AppIcon from './AppIcon.vue';
+import { frageBestaetigung } from '../dialog';
+import { personFarbe } from '../farben';
 
 const props = defineProps<{ datum: ISODate; dienstartId: DienstartId }>();
 const emit = defineEmits<{ schliessen: [] }>();
@@ -14,7 +18,7 @@ const store = useDatenStore();
 
 const dienst = computed(() => dienstart(props.dienstartId));
 const titel = computed(
-  () => `${dienst.value.name} am ${WOCHENTAG_KURZ[wochentag(props.datum)]}, ${formatDatum(props.datum)}`,
+  () => `${dienst.value.name} · ${WOCHENTAG_KURZ[wochentag(props.datum)]}, ${formatDatum(props.datum)}`,
 );
 
 const aktuelleZuweisung = computed(() => store.zuweisungFuer(props.datum, props.dienstartId));
@@ -56,10 +60,15 @@ async function besetzen(person: Person) {
   await store.zuweisungSetzen(props.datum, props.dienstartId, person.id);
   if (partnerTag.value) {
     const partnerLabel = `${WOCHENTAG_KURZ[wochentag(partnerTag.value)]}, ${formatDatum(partnerTag.value)}`;
-    const frage =
-      `Der Visitendienst wird am Wochenende normalerweise von derselben Person übernommen.\n\n` +
-      `${personName(person)} auch am ${partnerLabel} eintragen?`;
-    if (confirm(frage)) {
+    const ganzesWochenende = await frageBestaetigung({
+      titel: 'Ganzes Wochenende?',
+      text:
+        `Der Visitendienst wird am Wochenende normalerweise von derselben Person übernommen.\n\n` +
+        `${personName(person)} auch am ${partnerLabel} eintragen?`,
+      bestaetigenText: 'Ganzes Wochenende',
+      abbrechenText: 'Nur diesen Tag',
+    });
+    if (ganzesWochenende) {
       await store.zuweisungSetzen(partnerTag.value, props.dienstartId, person.id);
     }
   }
@@ -73,15 +82,16 @@ async function entfernen() {
 </script>
 
 <template>
-  <div class="card zuweisungs-panel">
-    <div class="zuweisungs-kopf">
-      <h2>{{ titel }}</h2>
-      <button class="btn btn-secondary btn-sm" @click="emit('schliessen')">Schließen</button>
-    </div>
-
+  <AppModal :titel="titel" :breite="560" @schliessen="emit('schliessen')">
     <p v-if="aktuellePerson" class="zuweisungs-aktuell">
-      Aktuell besetzt mit <strong>{{ personName(aktuellePerson) }}</strong>
-      <button class="btn btn-danger btn-sm" @click="entfernen">Besetzung entfernen</button>
+      <span>
+        <span class="person-punkt" :style="{ background: personFarbe(aktuellePerson.id) }"></span>
+        Aktuell besetzt mit <strong>{{ personName(aktuellePerson) }}</strong>
+      </span>
+      <button class="btn btn-ghost-danger btn-sm" @click="entfernen">
+        <AppIcon name="papierkorb" :groesse="14" />
+        Besetzung entfernen
+      </button>
     </p>
     <p v-else class="zuweisungs-aktuell zuweisungs-unbesetzt-hinweis">Aktuell unbesetzt.</p>
 
@@ -97,6 +107,7 @@ async function entfernen() {
           :disabled="k.person.id === aktuellePerson?.id"
           @click="besetzen(k.person)"
         >
+          <span class="person-punkt" :style="{ background: personFarbe(k.person.id) }"></span>
           {{ personName(k.person) }}
           <span v-if="k.person.id === aktuellePerson?.id">(aktuell)</span>
         </button>
@@ -109,5 +120,5 @@ async function entfernen() {
       Mit ⚠ markierte Personen verletzen eine Regel — du kannst sie trotzdem eintragen,
       der Verstoß bleibt im Plan sichtbar.
     </p>
-  </div>
+  </AppModal>
 </template>

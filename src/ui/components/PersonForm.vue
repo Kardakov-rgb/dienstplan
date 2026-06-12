@@ -4,6 +4,8 @@ import { useDatenStore } from '../../application/store';
 import type { Abwesenheit, DienstartId, DienstHaeufigkeit, Person } from '../../domain/types';
 import { DIENSTARTEN } from '../../domain/dienste';
 import { ABWESENHEITS_TYPEN, leereHaeufigkeiten } from '../../domain/person';
+import { zeigeToast } from '../toast';
+import AppIcon from './AppIcon.vue';
 
 const props = defineProps<{ person: Person | null }>();
 const emit = defineEmits<{ gespeichert: []; abgebrochen: [] }>();
@@ -67,14 +69,13 @@ async function speichern() {
     haeufigkeiten: formular.haeufigkeiten,
     abwesenheiten: formular.abwesenheiten,
   });
+  zeigeToast(props.person ? 'Person aktualisiert' : 'Person angelegt');
   emit('gespeichert');
 }
 </script>
 
 <template>
-  <div class="card">
-    <h2>{{ person ? 'Person bearbeiten' : 'Neue Person' }}</h2>
-    <form @submit.prevent="speichern">
+  <form @submit.prevent="speichern">
       <div class="form-row">
         <div class="form-group">
           <label for="person-vorname">Vorname</label>
@@ -134,24 +135,27 @@ async function speichern() {
         <input v-model="a.bis" type="date" required :aria-label="'Bis'" />
         <button
           type="button"
-          class="btn btn-danger btn-sm"
+          class="btn btn-ghost-danger btn-sm"
           title="Abwesenheit entfernen"
           @click="abwesenheitEntfernen(a.id)"
         >
-          ✕
+          <AppIcon name="x" :groesse="14" />
         </button>
         <span v-if="abwesenheitUngueltig(a)" class="form-error">„Von" liegt nach „Bis"</span>
       </div>
       <button type="button" class="btn btn-secondary btn-sm" @click="neueAbwesenheit">
-        + Abwesenheit
+        <AppIcon name="plus" :groesse="14" />
+        Abwesenheit
       </button>
 
       <div class="form-actions">
-        <button type="submit" class="btn btn-primary" :disabled="!speicherbar">Speichern</button>
+        <button type="submit" class="btn btn-primary" :disabled="!speicherbar">
+          <AppIcon name="check" />
+          Speichern
+        </button>
         <button type="button" class="btn btn-secondary" @click="emit('abgebrochen')">
           Abbrechen
         </button>
       </div>
-    </form>
-  </div>
+  </form>
 </template>

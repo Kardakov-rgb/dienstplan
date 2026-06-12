@@ -10,6 +10,14 @@ import {
   statistikAlsCsv,
   type ZeitraumArt,
 } from '../../domain/statistik';
+import AppIcon from '../components/AppIcon.vue';
+import { personFarbe } from '../farben';
+
+const ZEITRAUM_ARTEN: { id: ZeitraumArt; label: string }[] = [
+  { id: 'monat', label: 'Monat' },
+  { id: 'jahr', label: 'Jahr' },
+  { id: 'gesamt', label: 'Gesamt' },
+];
 
 const store = useDatenStore();
 
@@ -101,19 +109,33 @@ function csvHerunterladen() {
   <div class="page-header">
     <h1>Statistik</h1>
     <div class="page-header-controls">
-      <select v-model="art" aria-label="Zeitraum">
-        <option value="monat">Monat</option>
-        <option value="jahr">Jahr</option>
-        <option value="gesamt">Gesamt</option>
-      </select>
+      <div class="segmented" role="tablist" aria-label="Zeitraum">
+        <button
+          v-for="z in ZEITRAUM_ARTEN"
+          :key="z.id"
+          :class="{ aktiv: art === z.id }"
+          @click="art = z.id"
+        >
+          {{ z.label }}
+        </button>
+      </div>
       <template v-if="art !== 'gesamt'">
-        <button class="btn btn-secondary" @click="wechseln(-1)">&#8249;</button>
+        <button class="btn btn-secondary" title="Zurück" @click="wechseln(-1)">
+          <AppIcon name="links" />
+        </button>
         <span class="week-label">{{ zeitraumLabel }}</span>
-        <button class="btn btn-secondary" @click="wechseln(1)">&#8250;</button>
+        <button class="btn btn-secondary" title="Weiter" @click="wechseln(1)">
+          <AppIcon name="rechts" />
+        </button>
       </template>
-      <span v-else class="week-label">{{ zeitraumLabel }}</span>
-      <button class="btn btn-secondary" @click="csvHerunterladen">CSV</button>
-      <button class="btn btn-secondary" @click="drucken">Drucken</button>
+      <button class="btn btn-secondary" @click="csvHerunterladen">
+        <AppIcon name="download" />
+        CSV
+      </button>
+      <button class="btn btn-secondary" @click="drucken">
+        <AppIcon name="drucker" />
+        Drucken
+      </button>
     </div>
   </div>
 
@@ -163,6 +185,7 @@ function csvHerunterladen() {
           :class="{ 'zeile-inaktiv': !s.person.aktiv }"
         >
           <td>
+            <span class="person-punkt" :style="{ background: personFarbe(s.person.id) }"></span>
             {{ personName(s.person) }}
             <span v-if="!s.person.aktiv" class="badge badge-gray">inaktiv</span>
           </td>
