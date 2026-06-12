@@ -15,6 +15,9 @@ import { personKuerzel } from '../../domain/person';
 import { personName } from '../../domain/types';
 import type { DienstartId, ISODate } from '../../domain/types';
 import { harteVerstoesse } from '../../domain/rules';
+import type { GenerierungsErgebnis } from '../../domain/generator/generator';
+import { dienstart } from '../../domain/dienste';
+import { formatDatum } from '../../domain/datum';
 import ZuweisungsPanel from '../components/ZuweisungsPanel.vue';
 
 const store = useDatenStore();
@@ -29,6 +32,28 @@ const monatsLabel = computed(() => `${MONATS_NAMEN[monat.value - 1]} ${jahr.valu
 /** Angeklickte Zelle, deren Besetzung gerade bearbeitet wird. */
 const auswahl = ref<{ datum: ISODate; dienstartId: DienstartId } | null>(null);
 
+/** Bericht der letzten Generierung (verschwindet bei Monatswechsel). */
+const bericht = ref<GenerierungsErgebnis | null>(null);
+
+async function generieren() {
+  if (store.aktivePersonen.length === 0) {
+    alert('Bitte zuerst aktive Personen mit Soll/Max-Werten anlegen.');
+    return;
+  }
+  auswahl.value = null;
+  bericht.value = await store.monatGenerieren(jahr.value, monat.value);
+}
+
+async function monatLeeren() {
+  const frage =
+    `Wirklich ALLE Dienste im ${monatsLabel.value} entfernen?\n\n` +
+    `Auch von Hand gesetzte (fixierte) Einträge werden gelöscht.`;
+  if (!confirm(frage)) return;
+  auswahl.value = null;
+  bericht.value = null;
+  await store.monatLeeren(jahr.value, monat.value);
+}
+
 function monatWechseln(richtung: -1 | 1) {
   const neu = monat.value + richtung;
   if (neu < 1) {
@@ -41,6 +66,7 @@ function monatWechseln(richtung: -1 | 1) {
     monat.value = neu;
   }
   auswahl.value = null;
+  bericht.value = null;
 }
 
 /** Zelleninfo für die Darstellung (Besetzung, Verstöße, Markierungen). */
@@ -118,6 +144,32 @@ watch([() => store.personen.length], () => {
       <button class="btn btn-secondary" @click="monatWechseln(-1)">&#8249;</button>
       <span class="week-label">{{ monatsLabel }}</span>
       <button class="btn btn-secondary" @click="monatWechseln(1)">&#8250;</button>
+      <button class="btn btn-primary" @click="generieren">⚙ Plan generieren</button>
+      <button class="btn btn-danger" @click="monatLeeren">Monat leeren</button>
+    </div>
+  </div>
+
+  <div v-if="bericht" class="card generierungs-bericht">
+    <div class="zuweisungs-kopf">
+      <h2>Ergebnis der Generierung</h2>
+      <button class="btn btn-secondary btn-sm" @click="bericht = null">Schließen</button>
+    </div>
+    <p>
+      <strong>{{ bericht.neu.length }}</strong> Dienste besetzt,
+      <strong :class="{ 'bericht-luecken': bericht.luecken.length > 0 }">
+        {{ bericht.luecken.length }}
+      </strong>
+      Lücken.
+    </p>
+    <div v-for="luecke in bericht.luecken" :key="`${luecke.datum}-${luecke.dienstartId}`" class="bericht-luecke">
+      <strong>
+        {{ dienstart(luecke.dienstartId).name }} am {{ formatDatum(luecke.datum) }} — niemand verfügbar:
+      </strong>
+      <ul>
+        <li v-for="grund in luecke.gruende" :key="grund.personName">
+          {{ grund.personName }}: {{ grund.meldungen.join(' · ') }}
+        </li>
+      </ul>
     </div>
   </div>
 
