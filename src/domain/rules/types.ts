@@ -38,3 +38,15 @@ export interface Regel {
   gewicht: number;
   pruefe(kandidat: Kandidat, kontext: RegelKontext): Verstoss | null;
 }
+
+/**
+ * Weiche Regel: verbietet nichts, sondern vergibt Strafpunkte (0 = ideal).
+ * Der Generator wählt den Kandidaten mit der niedrigsten gewichteten Summe.
+ */
+export interface BewertungsRegel {
+  id: string;
+  beschreibung: string;
+  /** Multiplikator für die Strafpunkte dieser Regel. */
+  gewicht: number;
+  strafpunkte(kandidat: Kandidat, kontext: RegelKontext): number;
+}

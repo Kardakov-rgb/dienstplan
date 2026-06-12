@@ -483,3 +483,18 @@ td.zelle-ausgewaehlt {
   font-size: .8rem;
   color: var(--warning);
 }
+
+/* ===== GENERATOR-BERICHT (Phase 4) ===== */
+.generierungs-bericht { border-left: 4px solid var(--primary); }
+
+.bericht-luecken { color: var(--danger); }
+
+.bericht-luecke {
+  margin-top: .75rem;
+  font-size: .85rem;
+}
+
+.bericht-luecke ul {
+  margin: .35rem 0 0 1.25rem;
+  color: var(--text-muted);
+}

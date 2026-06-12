@@ -6,6 +6,8 @@
 import { defineStore } from 'pinia';
 import type { DienstartId, ISODate, Person, Zuweisung } from '../domain/types';
 import { DIENSTARTEN } from '../domain/dienste';
+import { imMonat } from '../domain/datum';
+import { generierePlan, type GenerierungsErgebnis } from '../domain/generator/generator';
 import type { DatenSpeicher } from '../infrastructure/storage/port';
 import { AKTUELLE_SCHEMA_VERSION, leereDaten } from '../infrastructure/storage/port';
 import { migriere } from './migrations';
@@ -98,6 +100,25 @@ export const useDatenStore = defineStore('daten', {
       this.zuweisungen = this.zuweisungen.filter(
         (z) => !(z.datum === datum && z.dienstartId === dienstartId),
       );
+      await this.speichern();
+    },
+
+    /** Füllt alle offenen Dienste des Monats; bestehende Einträge bleiben unangetastet. */
+    async monatGenerieren(jahr: number, monat: number): Promise<GenerierungsErgebnis> {
+      const ergebnis = generierePlan({
+        jahr,
+        monat,
+        personen: this.aktivePersonen,
+        bestehendeZuweisungen: this.zuweisungen,
+      });
+      this.zuweisungen.push(...ergebnis.neu);
+      await this.speichern();
+      return ergebnis;
+    },
+
+    /** Entfernt ALLE Zuweisungen des Monats — auch fixierte (kompletter Neustart). */
+    async monatLeeren(jahr: number, monat: number) {
+      this.zuweisungen = this.zuweisungen.filter((z) => !imMonat(z.datum, jahr, monat));
       await this.speichern();
     },
 
