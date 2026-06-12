@@ -16,6 +16,7 @@ function testPerson(anpassen: Partial<Person> = {}): Person {
     vorname: 'Erika',
     nachname: 'Muster',
     aktiv: true,
+    vollzeit: false,
     haeufigkeiten,
     abwesenheiten: [],
     ...anpassen,

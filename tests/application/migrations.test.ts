@@ -31,6 +31,7 @@ describe('Migration v1 → v2', () => {
     expect(person).not.toHaveProperty('rolle');
     expect(person).not.toHaveProperty('wochenstunden');
     expect(person.aktiv).toBe(true);
+    expect(person.vollzeit).toBe(false);
     expect(person.abwesenheiten).toEqual([]);
     // Sicherer Default: niemand wird ungewollt verplant.
     expect(person.haeufigkeiten.vordergrund).toEqual({ soll: 0, maximum: 0 });

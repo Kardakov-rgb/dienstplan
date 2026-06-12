@@ -33,6 +33,7 @@ function person(
     vorname: name,
     nachname: 'Test',
     aktiv: true,
+    vollzeit: false,
     haeufigkeiten,
     abwesenheiten: [],
     ...anpassen,

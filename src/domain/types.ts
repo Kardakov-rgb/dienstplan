@@ -36,6 +36,8 @@ export interface Person {
   nachname: string;
   /** Inaktive Personen bleiben für die Historie erhalten, werden aber nicht mehr verplant. */
   aktiv: boolean;
+  /** Vollzeitkräfte unterliegen dem monatlichen Wechsel der Wochenend-Muster. */
+  vollzeit: boolean;
   haeufigkeiten: Record<DienstartId, DienstHaeufigkeit>;
   abwesenheiten: Abwesenheit[];
 }

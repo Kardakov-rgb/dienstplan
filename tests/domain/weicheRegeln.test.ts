@@ -10,7 +10,7 @@ function testPerson(id = 'p1'): Person {
   const haeufigkeiten = leereHaeufigkeiten();
   haeufigkeiten.vordergrund = { soll: 2, maximum: 10 };
   haeufigkeiten.visite = { soll: 1, maximum: 4 };
-  return { id, vorname: 'Erika', nachname: 'Muster', aktiv: true, haeufigkeiten, abwesenheiten: [] };
+  return { id, vorname: 'Erika', nachname: 'Muster', aktiv: true, vollzeit: false, haeufigkeiten, abwesenheiten: [] };
 }
 
 function zuweisung(teil: Partial<Zuweisung>): Zuweisung {
