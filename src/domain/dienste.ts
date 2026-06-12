@@ -14,8 +14,20 @@ export interface Dienstart {
   beschreibung: string;
   /** CSS-Farbklasse für die Darstellung im Plan. */
   farbKlasse: string;
-  /** Findet der Dienst an diesem Kalendertag statt? */
+  /** Findet der Dienst an diesem Kalendertag statt (Zelle im Plan offen)? */
   findetStattAm(datum: ISODate): boolean;
+  /**
+   * Besetzt der Generator diesen Tag automatisch? Fehlt die Methode,
+   * gilt findetStattAm. Visite an Wochentags-Feiertagen ist z.B. nur
+   * manuell besetzbar (i.d.R. kein Visitendienst, Ostern/Weihnachten
+   * werden individuell eingetragen).
+   */
+  generierbarAm?(datum: ISODate): boolean;
+}
+
+/** Soll der Generator diesen Tag automatisch besetzen? */
+export function istGenerierbar(dienst: Dienstart, datum: ISODate): boolean {
+  return (dienst.generierbarAm ?? dienst.findetStattAm)(datum);
 }
 
 const SAMSTAG = 6;
@@ -34,11 +46,16 @@ export const DIENSTARTEN: readonly Dienstart[] = [
     id: 'visite',
     name: 'Visitendienst',
     beschreibung:
-      'Samstags, sonntags und an Feiertagen. Sa+So übernimmt im Normalfall dieselbe Person.',
+      'Samstags und sonntags (Sa+So im Normalfall dieselbe Person). An Wochentags-Feiertagen ' +
+      'nur manuell eintragbar — i.d.R. findet dort keine Visite statt.',
     farbKlasse: 'dienst-visite',
     findetStattAm: (datum) => {
       const wt = wochentag(datum);
       return wt === SAMSTAG || wt === SONNTAG || istFeiertag(datum);
+    },
+    generierbarAm: (datum) => {
+      const wt = wochentag(datum);
+      return wt === SAMSTAG || wt === SONNTAG;
     },
   },
   {

@@ -15,7 +15,7 @@
  */
 import type { DienstartId, ISODate, Person, Zuweisung } from '../types';
 import { personName } from '../types';
-import { DIENSTARTEN } from '../dienste';
+import { DIENSTARTEN, istGenerierbar } from '../dienste';
 import { addiereTage, monatsTage, wochentag } from '../datum';
 import { bewerteKandidat, harteVerstoesse } from '../rules';
 import type { Verstoss } from '../rules/types';
@@ -53,7 +53,8 @@ function offeneSlots(jahr: number, monat: number, zuweisungen: Zuweisung[]): Slo
 
   for (const tag of tage) {
     for (const dienst of DIENSTARTEN) {
-      if (!dienst.findetStattAm(tag) || !istFrei(tag, dienst.id) || verplant.has(`${tag}|${dienst.id}`)) {
+      // Nur automatisch besetzbare Tage; z.B. Feiertags-Visite bleibt manuell.
+      if (!istGenerierbar(dienst, tag) || !istFrei(tag, dienst.id) || verplant.has(`${tag}|${dienst.id}`)) {
         continue;
       }
       // Visite: Sa+So als Block, wenn der Sonntag im selben Monat liegt und frei ist.
