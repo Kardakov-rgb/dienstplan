@@ -138,6 +138,7 @@ function csvHerunterladen() {
 
   <div class="card">
     <h2>Dienste pro Person — {{ zeitraumLabel }}</h2>
+    <div class="tabelle-scroll">
     <table class="table stat-tabelle">
       <thead>
         <tr>
@@ -186,6 +187,7 @@ function csvHerunterladen() {
         </tr>
       </tbody>
     </table>
+    </div>
     <p class="form-hint">
       Visite zählt in Einheiten (Sa+So-Block = 1). Jahres-Soll = Monats-Soll × 12; in der
       Gesamtansicht gibt es keinen Soll-Vergleich. Balkenlänge = Vergleich zur Person mit den

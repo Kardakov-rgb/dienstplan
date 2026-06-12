@@ -79,6 +79,7 @@ async function loeschen(p: Person) {
   />
 
   <div class="card">
+    <div class="tabelle-scroll">
     <table class="table">
       <thead>
         <tr>
@@ -139,5 +140,6 @@ async function loeschen(p: Person) {
         </tr>
       </tbody>
     </table>
+    </div>
   </div>
 </template>
