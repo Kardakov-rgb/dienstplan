@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive } from 'vue';
 import { useDatenStore } from '../../application/store';
-import type { Abwesenheit, Person } from '../../domain/types';
+import type { Abwesenheit, AbwesenheitsTyp, Person } from '../../domain/types';
 import { personName } from '../../domain/types';
 import { ABWESENHEITS_TYPEN } from '../../domain/person';
-import { heuteISO } from '../../domain/datum';
+import { ersterTagNaechsterMonat, heuteISO } from '../../domain/datum';
 import AppModal from './AppModal.vue';
 import AppIcon from './AppIcon.vue';
 import { personFarbe } from '../farben';
@@ -25,10 +25,29 @@ const personen = computed<Person[]>(() =>
   [...store.personen].sort((a, b) => personName(a).localeCompare(personName(b), 'de')),
 );
 
+// IDs, deren Datum bewusst gesetzt wurde — diese werden beim Typ-Wechsel
+// nicht automatisch überschrieben. Bestehende Einträge zählen von Anfang an dazu.
+const manuellGesetzt = reactive(
+  new Set<string>(store.personen.flatMap((p) => p.abwesenheiten.map((a) => a.id))),
+);
+
+/** Krank → aktueller Monat (heute); sonst → erster Tag des nächsten Monats. */
+function standardDatumFuerTyp(typ: AbwesenheitsTyp): string {
+  return typ === 'krank' ? heuteISO() : ersterTagNaechsterMonat();
+}
+
 function neueAbwesenheit(personId: string) {
-  // Standard: heutiges Datum (aktuelles Jahr + Monat) — beschleunigt die Eingabe.
-  const heute = heuteISO();
-  entwurf[personId].push({ id: crypto.randomUUID(), typ: 'urlaub', von: heute, bis: heute });
+  // Neue Zeile startet als Urlaub → Vorbelegung „nächster Monat".
+  const datum = standardDatumFuerTyp('urlaub');
+  entwurf[personId].push({ id: crypto.randomUUID(), typ: 'urlaub', von: datum, bis: datum });
+}
+
+/** Datum dem Typ anpassen — außer der Nutzer hat es schon selbst geändert. */
+function typGeaendert(a: Abwesenheit) {
+  if (manuellGesetzt.has(a.id)) return;
+  const datum = standardDatumFuerTyp(a.typ);
+  a.von = datum;
+  a.bis = datum;
 }
 
 function entfernen(personId: string, id: string) {
@@ -85,12 +104,12 @@ async function speichern() {
       <p v-if="entwurf[p.id].length === 0" class="abwesenheit-leer">Keine Abwesenheiten.</p>
 
       <div v-for="a in entwurf[p.id]" :key="a.id" class="abwesenheit-row">
-        <select v-model="a.typ" aria-label="Typ">
+        <select v-model="a.typ" aria-label="Typ" @change="typGeaendert(a)">
           <option v-for="t in ABWESENHEITS_TYPEN" :key="t.id" :value="t.id">{{ t.label }}</option>
         </select>
-        <input v-model="a.von" type="date" required aria-label="Von" />
+        <input v-model="a.von" type="date" required aria-label="Von" @change="manuellGesetzt.add(a.id)" />
         <span class="abwesenheit-bis">bis</span>
-        <input v-model="a.bis" type="date" required aria-label="Bis" />
+        <input v-model="a.bis" type="date" required aria-label="Bis" @change="manuellGesetzt.add(a.id)" />
         <button
           type="button"
           class="btn btn-ghost-danger btn-sm"
