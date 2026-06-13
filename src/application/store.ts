@@ -42,6 +42,8 @@ export const useDatenStore = defineStore('daten', {
     personen: [] as Person[],
     zuweisungen: [] as Zuweisung[],
     geladen: false,
+    /** Läuft bereits ein Echtzeit-Abonnement? (verhindert Doppel-Abos) */
+    syncAktiv: false,
   }),
 
   getters: {
@@ -61,6 +63,24 @@ export const useDatenStore = defineStore('daten', {
       this.personen = migriert.personen;
       this.zuweisungen = migriert.zuweisungen;
       this.geladen = true;
+
+      // Echtzeit-Sync (Firestore): einmalig abonnieren, damit Änderungen
+      // anderer Geräte automatisch erscheinen.
+      if (speicher.abonniere && !this.syncAktiv) {
+        this.syncAktiv = true;
+        speicher.abonniere((remote) => {
+          const migriert = migriere(remote);
+          this.personen = migriert.personen;
+          this.zuweisungen = migriert.zuweisungen;
+        });
+      }
+    },
+
+    /** Leert den lokalen Zustand (z. B. nach dem Abmelden). */
+    zuruecksetzen() {
+      this.personen = [];
+      this.zuweisungen = [];
+      this.geladen = false;
     },
 
     async speichern() {
