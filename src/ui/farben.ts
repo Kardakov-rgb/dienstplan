@@ -1,20 +1,22 @@
 /**
  * Automatische, stabile Farbe je Person (abgeleitet aus der ID).
- * 12 gut unterscheidbare, kräftige Töne mit weißem Text lesbar.
+ * 12 gut unterscheidbare Töne, an die Marke angeglichen (Magenta/Bordeaux
+ * führen). Alle dunkel genug für weißen Text — reines Gold ist bewusst
+ * NICHT enthalten, da weißer Text darauf nicht lesbar wäre.
  */
 const PALETTE = [
-  '#4f46e5', // Indigo
-  '#0d9488', // Teal
-  '#d97706', // Amber
-  '#db2777', // Pink
-  '#7c3aed', // Violett
+  '#c62381', // Magenta (Marke)
+  '#7b1f23', // Bordeaux (Marke)
+  '#a81d6e', // Dunkel-Magenta
+  '#0f766e', // Teal
   '#2563eb', // Blau
-  '#059669', // Smaragd
-  '#e11d48', // Rosenrot
-  '#ca8a04', // Ocker
-  '#0891b2', // Cyan
+  '#7c3aed', // Violett
+  '#2e7d5b', // Grün
+  '#b45309', // Bronze
+  '#0e7490', // Cyan
   '#9333ea', // Purpur
-  '#65a30d', // Limette
+  '#be123c', // Rose
+  '#4d7c0f', // Oliv
 ] as const;
 
 export function personFarbe(personId: string): string {
