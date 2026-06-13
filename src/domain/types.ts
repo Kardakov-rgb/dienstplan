@@ -32,8 +32,7 @@ export interface DienstHaeufigkeit {
 /** Person, die Dienste übernehmen kann. */
 export interface Person {
   id: string;
-  vorname: string;
-  nachname: string;
+  name: string;
   /** Inaktive Personen bleiben für die Historie erhalten, werden aber nicht mehr verplant. */
   aktiv: boolean;
   /** Vollzeitkräfte unterliegen dem monatlichen Wechsel der Wochenend-Muster. */
@@ -56,5 +55,5 @@ export interface Zuweisung {
 }
 
 export function personName(p: Person): string {
-  return `${p.vorname} ${p.nachname}`.trim();
+  return p.name.trim();
 }

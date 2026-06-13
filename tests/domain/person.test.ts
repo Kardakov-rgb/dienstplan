@@ -5,13 +5,14 @@ import {
   darfDienst,
   leereHaeufigkeiten,
   machtIrgendeinenDienst,
+  personKuerzel,
+  vollzeitHaeufigkeiten,
 } from '../../src/domain/person';
 
 function testPerson(anpassen: Partial<Person> = {}): Person {
   return {
     id: 'p1',
-    vorname: 'Erika',
-    nachname: 'Muster',
+    name: 'Erika Muster',
     aktiv: true,
     vollzeit: false,
     haeufigkeiten: leereHaeufigkeiten(),
@@ -19,6 +20,26 @@ function testPerson(anpassen: Partial<Person> = {}): Person {
     ...anpassen,
   };
 }
+
+describe('personKuerzel', () => {
+  it('bildet bei mehreren Wörtern die Initialen', () => {
+    expect(personKuerzel(testPerson({ name: 'Erika Muster' }))).toBe('EM');
+    expect(personKuerzel(testPerson({ name: 'Anna Berta Schmidt' }))).toBe('AS');
+  });
+
+  it('nimmt bei einem Wort die ersten zwei Buchstaben', () => {
+    expect(personKuerzel(testPerson({ name: 'Anna' }))).toBe('AN');
+  });
+});
+
+describe('vollzeitHaeufigkeiten', () => {
+  it('belegt Vordergrund 4/6, Visite 1/2, Davinci 1/2 vor', () => {
+    const h = vollzeitHaeufigkeiten();
+    expect(h.vordergrund).toEqual({ soll: 4, maximum: 6 });
+    expect(h.visite).toEqual({ soll: 1, maximum: 2 });
+    expect(h.davinci).toEqual({ soll: 1, maximum: 2 });
+  });
+});
 
 describe('darfDienst', () => {
   it('verneint bei Maximum 0', () => {

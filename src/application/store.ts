@@ -4,7 +4,7 @@
  * Stores; gespeichert wird automatisch über den injizierten DatenSpeicher.
  */
 import { defineStore } from 'pinia';
-import type { DienstartId, ISODate, Person, Zuweisung } from '../domain/types';
+import type { Abwesenheit, DienstartId, ISODate, Person, Zuweisung } from '../domain/types';
 import { DIENSTARTEN } from '../domain/dienste';
 import { imMonat } from '../domain/datum';
 import { generierePlan, type GenerierungsErgebnis } from '../domain/generator/generator';
@@ -42,6 +42,8 @@ export const useDatenStore = defineStore('daten', {
     personen: [] as Person[],
     zuweisungen: [] as Zuweisung[],
     geladen: false,
+    /** Läuft bereits ein Echtzeit-Abonnement? (verhindert Doppel-Abos) */
+    syncAktiv: false,
   }),
 
   getters: {
@@ -61,6 +63,24 @@ export const useDatenStore = defineStore('daten', {
       this.personen = migriert.personen;
       this.zuweisungen = migriert.zuweisungen;
       this.geladen = true;
+
+      // Echtzeit-Sync (Firestore): einmalig abonnieren, damit Änderungen
+      // anderer Geräte automatisch erscheinen.
+      if (speicher.abonniere && !this.syncAktiv) {
+        this.syncAktiv = true;
+        speicher.abonniere((remote) => {
+          const migriert = migriere(remote);
+          this.personen = migriert.personen;
+          this.zuweisungen = migriert.zuweisungen;
+        });
+      }
+    },
+
+    /** Leert den lokalen Zustand (z. B. nach dem Abmelden). */
+    zuruecksetzen() {
+      this.personen = [];
+      this.zuweisungen = [];
+      this.geladen = false;
     },
 
     async speichern() {
@@ -81,6 +101,19 @@ export const useDatenStore = defineStore('daten', {
       } else {
         this.personen.push({ ...person, id: crypto.randomUUID() });
       }
+      await this.speichern();
+    },
+
+    /** Setzt die Abwesenheiten einer Person (Verwaltung auf der Dienstplan-Seite). */
+    async personAbwesenheitenSetzen(id: string, abwesenheiten: Abwesenheit[]) {
+      const p = this.personen.find((p) => p.id === id);
+      if (!p) throw new Error(`Person ${id} nicht gefunden.`);
+      for (const a of abwesenheiten) {
+        if (a.von > a.bis) {
+          throw new Error('Abwesenheit: „Von" muss vor oder auf „Bis" liegen.');
+        }
+      }
+      p.abwesenheiten = abwesenheiten;
       await this.speichern();
     },
 
