@@ -438,66 +438,13 @@ watch([() => store.personen.length], () => {
   </div>
 
   <div class="card">
-    <!-- Breite Ansicht: Dienste als Zeilen, Tage als Spalten -->
-    <div v-if="!istSchmal" class="calendar-grid-wrapper">
-      <table class="plan-table">
-        <thead>
-          <tr>
-            <th class="plan-dienst-col">Dienst</th>
-            <th
-              v-for="tag in tage"
-              :key="tag"
-              :class="tagKlassen(tag)"
-              :title="feiertagsName(tag) ?? undefined"
-            >
-              {{ zerlege(tag).tag }}<br />
-              <span class="plan-wochentag">{{ WOCHENTAG_KURZ[wochentag(tag)] }}</span>
-              <span v-if="feiertagsName(tag)" class="plan-feiertag-punkt" aria-hidden="true">•</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="dienst in DIENSTARTEN" :key="dienst.id">
-            <td class="plan-dienst-col" :title="dienst.beschreibung">{{ dienst.name }}</td>
-            <td
-              v-for="tag in tage"
-              :key="tag"
-              :class="zellKlassen(tag, dienst.id)"
-              :title="dienst.findetStattAm(tag) ? zellTitel(tag, dienst.id) : (feiertagsName(tag) ?? undefined)"
-              @click="zelleKlick(tag, dienst.id)"
-            >
-              <template v-if="!dienst.findetStattAm(tag)">
-                <span class="zelle-aus-marker">–</span>
-              </template>
-              <template v-else-if="zellInfo(tag, dienst.id).person">
-                <span
-                  class="person-chip"
-                  :style="{ background: personFarbe(zellInfo(tag, dienst.id).person!.id) }"
-                >
-                  {{ personKuerzel(zellInfo(tag, dienst.id).person!) }}
-                </span>
-                <span v-if="zellInfo(tag, dienst.id).zuweisung?.fixiert" class="zelle-pin" aria-hidden="true"></span>
-                <span v-if="zellInfo(tag, dienst.id).verstoesse.length > 0" class="zelle-warnung">⚠</span>
-              </template>
-              <template v-else-if="istOptional(tag, dienst.id)">
-                <span class="zelle-optional-marker">·</span>
-              </template>
-              <template v-else>
-                <span class="zelle-unbesetzt-marker">!</span>
-              </template>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Handy-Ansicht: Tage als Zeilen, Dienste als Spalten -->
-    <table v-else class="plan-table plan-table-mobil">
+    <!-- Vertikale Ansicht: Tage als Zeilen, Dienste als Spalten -->
+    <table class="plan-table plan-table-vertikal">
       <thead>
         <tr>
           <th class="plan-tag-col">Tag</th>
           <th v-for="dienst in DIENSTARTEN" :key="dienst.id" :title="dienst.name">
-            {{ dienst.kuerzel }}
+            {{ istSchmal ? dienst.kuerzel : dienst.name }}
           </th>
         </tr>
       </thead>
@@ -522,7 +469,7 @@ watch([() => store.personen.length], () => {
                 class="person-chip"
                 :style="{ background: personFarbe(zellInfo(tag, dienst.id).person!.id) }"
               >
-                {{ personKuerzel(zellInfo(tag, dienst.id).person!) }}
+                {{ istSchmal ? personKuerzel(zellInfo(tag, dienst.id).person!) : personName(zellInfo(tag, dienst.id).person!) }}
               </span>
               <span v-if="zellInfo(tag, dienst.id).zuweisung?.fixiert" class="zelle-pin" aria-hidden="true"></span>
               <span v-if="zellInfo(tag, dienst.id).verstoesse.length > 0" class="zelle-warnung">⚠</span>
