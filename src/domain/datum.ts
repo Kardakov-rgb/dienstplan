@@ -14,6 +14,18 @@ export function heuteISO(): ISODate {
   return toISODate(d.getFullYear(), d.getMonth() + 1, d.getDate());
 }
 
+/** Erster Tag des nächsten Monats (mit Jahreswechsel Dez → Jan). */
+export function ersterTagNaechsterMonat(): ISODate {
+  const d = new Date();
+  let jahr = d.getFullYear();
+  let monat = d.getMonth() + 2; // 1-basiert: nächster Monat
+  if (monat > 12) {
+    monat = 1;
+    jahr += 1;
+  }
+  return toISODate(jahr, monat, 1);
+}
+
 export function zerlege(datum: ISODate): { jahr: number; monat: number; tag: number } {
   const [jahr, monat, tag] = datum.split('-').map(Number);
   return { jahr, monat, tag };
