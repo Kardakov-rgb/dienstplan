@@ -122,6 +122,53 @@ export const useDatenStore = defineStore('daten', {
       await this.speichern();
     },
 
+    /**
+     * Entfernt alle NICHT-fixierten Einträge des Monats und generiert neu.
+     * Fixierte (manuell gesetzte) Einträge bleiben erhalten.
+     */
+    async neuVerteilen(jahr: number, monat: number): Promise<GenerierungsErgebnis> {
+      this.zuweisungen = this.zuweisungen.filter(
+        (z) => !(imMonat(z.datum, jahr, monat) && !z.fixiert),
+      );
+      return this.monatGenerieren(jahr, monat);
+    },
+
+    /** Wechselt den fixiert-Status einer Zuweisung. */
+    async zuweisungFixierenToggle(datum: ISODate, dienstartId: DienstartId) {
+      const z = this.zuweisungen.find((z) => z.datum === datum && z.dienstartId === dienstartId);
+      if (!z) return;
+      z.fixiert = !z.fixiert;
+      await this.speichern();
+    },
+
+    /** Ersetzt alle Zuweisungen durch einen gespeicherten Schnappschuss (Undo). */
+    async zuweisungenWiederherstellen(snapshot: Zuweisung[]) {
+      this.zuweisungen = [...snapshot];
+      await this.speichern();
+    },
+
+    /** Serialisiert den gesamten Datenstand als JSON-String. */
+    async exportierenAlsJson(): Promise<string> {
+      return JSON.stringify(
+        {
+          schemaVersion: AKTUELLE_SCHEMA_VERSION,
+          personen: this.personen,
+          zuweisungen: this.zuweisungen,
+        },
+        null,
+        2,
+      );
+    },
+
+    /** Importiert einen zuvor exportierten JSON-String und speichert ihn. */
+    async importierenAusJson(json: string): Promise<void> {
+      const daten = JSON.parse(json);
+      const migriert = migriere(daten);
+      this.personen = migriert.personen;
+      this.zuweisungen = migriert.zuweisungen;
+      await this.speichern();
+    },
+
     async personAktivSetzen(id: string, aktiv: boolean) {
       const p = this.personen.find((p) => p.id === id);
       if (!p) throw new Error(`Person ${id} nicht gefunden.`);

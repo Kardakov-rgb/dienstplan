@@ -7,7 +7,8 @@
  * Spezialregel „max. 1 Visitendienst pro Monat" beziehen sich auf Einheiten.
  */
 import type { DienstartId, ISODate, Zuweisung } from './types';
-import { addiereTage, imMonat, wochentag, zerlege } from './datum';
+import { addiereTage, imMonat, monatsTage, wochentag, zerlege } from './datum';
+import { DIENSTARTEN, istGenerierbar } from './dienste';
 
 const SAMSTAG = 6;
 const SONNTAG = 0;
@@ -72,4 +73,18 @@ export function einsatzWochenenden(
     if (sa && zerlege(sa).jahr === jahr && zerlege(sa).monat === monat) wochenenden.add(sa);
   }
   return wochenenden;
+}
+
+/**
+ * Wie viele Dienste der Monat je Dienstart verlangt (nur automatisch
+ * besetzbare Tage; Visite in Einheiten). Grundlage des Kapazitäts-Checks.
+ */
+export function monatsBedarf(jahr: number, monat: number): Record<DienstartId, number> {
+  const bedarf = {} as Record<DienstartId, number>;
+  for (const d of DIENSTARTEN) {
+    const tage = monatsTage(jahr, monat).filter((tag) => istGenerierbar(d, tag));
+    bedarf[d.id] =
+      d.id === 'visite' ? new Set(tage.map((tag) => visiteEinheit(tag))).size : tage.length;
+  }
+  return bedarf;
 }
