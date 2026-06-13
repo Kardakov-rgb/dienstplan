@@ -4,6 +4,7 @@ import { useDatenStore } from '../../application/store';
 import type { Abwesenheit, Person } from '../../domain/types';
 import { personName } from '../../domain/types';
 import { ABWESENHEITS_TYPEN } from '../../domain/person';
+import { heuteISO } from '../../domain/datum';
 import AppModal from './AppModal.vue';
 import AppIcon from './AppIcon.vue';
 import { personFarbe } from '../farben';
@@ -25,7 +26,9 @@ const personen = computed<Person[]>(() =>
 );
 
 function neueAbwesenheit(personId: string) {
-  entwurf[personId].push({ id: crypto.randomUUID(), typ: 'urlaub', von: '', bis: '' });
+  // Standard: heutiges Datum (aktuelles Jahr + Monat) — beschleunigt die Eingabe.
+  const heute = heuteISO();
+  entwurf[personId].push({ id: crypto.randomUUID(), typ: 'urlaub', von: heute, bis: heute });
 }
 
 function entfernen(personId: string, id: string) {
