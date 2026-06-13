@@ -4,8 +4,7 @@ import { useDatenStore } from '../../application/store';
 import type { Person } from '../../domain/types';
 import { personName } from '../../domain/types';
 import { DIENSTARTEN } from '../../domain/dienste';
-import { abwesenheitsLabel, machtIrgendeinenDienst } from '../../domain/person';
-import { formatDatum } from '../../domain/datum';
+import { machtIrgendeinenDienst } from '../../domain/person';
 import { monatsBedarf } from '../../domain/zaehlung';
 import PersonForm from '../components/PersonForm.vue';
 import AppModal from '../components/AppModal.vue';
@@ -40,12 +39,6 @@ function haeufigkeitsText(p: Person, dienstartId: (typeof DIENSTARTEN)[number]['
   const h = p.haeufigkeiten[dienstartId];
   if (!h || h.maximum === 0) return '—';
   return `${h.soll} / ${h.maximum}`;
-}
-
-function abwesenheitenTooltip(p: Person): string {
-  return p.abwesenheiten
-    .map((a) => `${abwesenheitsLabel(a.typ)}: ${formatDatum(a.von)} – ${formatDatum(a.bis)}`)
-    .join('\n');
 }
 
 async function aktivUmschalten(p: Person) {
@@ -166,8 +159,8 @@ const kapazitaet = computed(() => {
   <div class="card">
     <div v-if="sichtbarePersonen.length === 0" class="empty-state">
       <strong>Noch keine Personen angelegt.</strong><br />
-      Lege zuerst dein Team an — mit Soll/Max je Dienstart und Abwesenheiten.
-      Danach kann der Dienstplan generiert werden.<br />
+      Lege zuerst dein Team an — mit Soll/Max je Dienstart.
+      Abwesenheiten pflegst du auf der Dienstplan-Seite.<br />
       <button class="btn btn-primary" @click="neuePerson">
         <AppIcon name="plus" />
         Erste Person anlegen
@@ -182,7 +175,6 @@ const kapazitaet = computed(() => {
             <th v-for="d in DIENSTARTEN" :key="d.id" title="Soll / Max pro Monat">
               {{ d.name }}
             </th>
-            <th>Abwesenheiten</th>
             <th>Status</th>
             <th>Aktionen</th>
           </tr>
@@ -208,12 +200,6 @@ const kapazitaet = computed(() => {
               </span>
             </td>
             <td v-for="d in DIENSTARTEN" :key="d.id">{{ haeufigkeitsText(p, d.id) }}</td>
-            <td>
-              <span v-if="p.abwesenheiten.length === 0">–</span>
-              <span v-else class="abwesenheit-anzahl" :title="abwesenheitenTooltip(p)">
-                {{ p.abwesenheiten.length }} 📅
-              </span>
-            </td>
             <td>
               <span class="badge" :class="p.aktiv ? 'badge-green' : 'badge-gray'">
                 {{ p.aktiv ? 'aktiv' : 'inaktiv' }}

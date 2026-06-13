@@ -19,8 +19,7 @@ function testPerson(anpassen: Partial<Person> = {}): Person {
   haeufigkeiten.davinci = { soll: 1, maximum: 4 };
   return {
     id: 'p1',
-    vorname: 'Erika',
-    nachname: 'Muster',
+    name: 'Erika Muster',
     aktiv: true,
     vollzeit: false,
     haeufigkeiten,

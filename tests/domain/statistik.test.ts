@@ -9,8 +9,7 @@ function person(id: string, name: string, anpassen: Partial<Person> = {}): Perso
   haeufigkeiten.visite = { soll: 1, maximum: 2 };
   return {
     id,
-    vorname: name,
-    nachname: 'Test',
+    name: `${name} Test`,
     aktiv: true,
     vollzeit: false,
     haeufigkeiten,

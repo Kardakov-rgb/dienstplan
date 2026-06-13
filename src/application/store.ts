@@ -4,7 +4,7 @@
  * Stores; gespeichert wird automatisch über den injizierten DatenSpeicher.
  */
 import { defineStore } from 'pinia';
-import type { DienstartId, ISODate, Person, Zuweisung } from '../domain/types';
+import type { Abwesenheit, DienstartId, ISODate, Person, Zuweisung } from '../domain/types';
 import { DIENSTARTEN } from '../domain/dienste';
 import { imMonat } from '../domain/datum';
 import { generierePlan, type GenerierungsErgebnis } from '../domain/generator/generator';
@@ -101,6 +101,19 @@ export const useDatenStore = defineStore('daten', {
       } else {
         this.personen.push({ ...person, id: crypto.randomUUID() });
       }
+      await this.speichern();
+    },
+
+    /** Setzt die Abwesenheiten einer Person (Verwaltung auf der Dienstplan-Seite). */
+    async personAbwesenheitenSetzen(id: string, abwesenheiten: Abwesenheit[]) {
+      const p = this.personen.find((p) => p.id === id);
+      if (!p) throw new Error(`Person ${id} nicht gefunden.`);
+      for (const a of abwesenheiten) {
+        if (a.von > a.bis) {
+          throw new Error('Abwesenheit: „Von" muss vor oder auf „Bis" liegen.');
+        }
+      }
+      p.abwesenheiten = abwesenheiten;
       await this.speichern();
     },
 

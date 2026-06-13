@@ -20,6 +20,7 @@ import type { DienstartId, ISODate, Zuweisung } from '../../domain/types';
 import { harteVerstoesse } from '../../domain/rules';
 import type { GenerierungsErgebnis } from '../../domain/generator/generator';
 import ZuweisungsPanel from '../components/ZuweisungsPanel.vue';
+import AbwesenheitenDialog from '../components/AbwesenheitenDialog.vue';
 import AppIcon from '../components/AppIcon.vue';
 import { HANDY_BREITE, useMediaQuery } from '../useMediaQuery';
 import { frageBestaetigung } from '../dialog';
@@ -49,6 +50,9 @@ const generiertGerade = ref(false);
 
 /** Hervorgehobene Person in der Legende (null = keine Filterung). */
 const hervorgehobenePerson = ref<string | null>(null);
+
+/** Abwesenheiten-Dialog sichtbar? */
+const abwesenheitenOffen = ref(false);
 
 async function generieren() {
   if (store.aktivePersonen.length === 0) {
@@ -350,6 +354,10 @@ watch([() => store.personen.length], () => {
         <AppIcon name="reload" />
         Neu verteilen
       </button>
+      <button class="btn btn-secondary" title="Urlaub, Krank, Fortbildung, Wunsch-frei verwalten" @click="abwesenheitenOffen = true">
+        <AppIcon name="kalender" :groesse="15" />
+        Abwesenheiten
+      </button>
       <button class="btn btn-ghost-danger" @click="monatLeeren">
         <AppIcon name="papierkorb" :groesse="15" />
         Monat leeren
@@ -379,6 +387,8 @@ watch([() => store.personen.length], () => {
     :dienstart-id="auswahl.dienstartId"
     @schliessen="auswahl = null"
   />
+
+  <AbwesenheitenDialog v-if="abwesenheitenOffen" @schliessen="abwesenheitenOffen = false" />
 
   <div v-if="bericht" class="card generierungs-bericht">
     <div class="zuweisungs-kopf">

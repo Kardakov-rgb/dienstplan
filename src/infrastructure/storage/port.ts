@@ -12,7 +12,7 @@ export interface GespeicherteDaten {
   zuweisungen: Zuweisung[];
 }
 
-export const AKTUELLE_SCHEMA_VERSION = 3;
+export const AKTUELLE_SCHEMA_VERSION = 4;
 
 export interface DatenSpeicher {
   /** Liefert null, wenn noch nie etwas gespeichert wurde. */

@@ -13,8 +13,7 @@ function testPerson(anpassen: Partial<Person> = {}): Person {
   haeufigkeiten.visite = { soll: 1, maximum: 2 };
   return {
     id: 'p1',
-    vorname: 'Erika',
-    nachname: 'Muster',
+    name: 'Erika Muster',
     aktiv: true,
     vollzeit: false,
     haeufigkeiten,

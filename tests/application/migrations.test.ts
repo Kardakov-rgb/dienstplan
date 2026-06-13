@@ -39,10 +39,11 @@ describe('Migration v1 → v2', () => {
     expect(person.haeufigkeiten.davinci).toEqual({ soll: 0, maximum: 0 });
   });
 
-  it('behält Name und Zuweisungen unverändert', () => {
+  it('führt Vor-/Nachname zum Namensfeld zusammen und behält Zuweisungen', () => {
     const migriert = migriere(v1Daten());
-    expect(migriert.personen[0].vorname).toBe('Max');
-    expect(migriert.personen[0].nachname).toBe('Beispiel');
+    expect(migriert.personen[0].name).toBe('Max Beispiel');
+    expect(migriert.personen[0]).not.toHaveProperty('vorname');
+    expect(migriert.personen[0]).not.toHaveProperty('nachname');
     expect(migriert.zuweisungen).toEqual(v1Daten().zuweisungen);
   });
 
@@ -58,5 +59,34 @@ describe('Migration v1 → v2', () => {
   it('wirft bei unbekannter (zu alter) Version ohne Migrationspfad', () => {
     const uralt = { schemaVersion: 0, personen: [], zuweisungen: [] } as GespeicherteDaten;
     expect(() => migriere(uralt)).toThrow(/Migration/);
+  });
+});
+
+describe('Migration v3 → v4 (Namensfeld)', () => {
+  it('führt vorname + nachname zu name zusammen', () => {
+    const v3: GespeicherteDaten = {
+      schemaVersion: 3,
+      personen: [
+        {
+          id: '1',
+          vorname: 'Erika',
+          nachname: 'Muster',
+          aktiv: true,
+          vollzeit: true,
+          haeufigkeiten: {
+            vordergrund: { soll: 4, maximum: 6 },
+            visite: { soll: 1, maximum: 2 },
+            davinci: { soll: 1, maximum: 2 },
+          },
+          abwesenheiten: [],
+        },
+      ] as unknown as GespeicherteDaten['personen'],
+      zuweisungen: [],
+    };
+    const migriert = migriere(v3);
+    expect(migriert.schemaVersion).toBe(AKTUELLE_SCHEMA_VERSION);
+    expect(migriert.personen[0].name).toBe('Erika Muster');
+    expect(migriert.personen[0].vollzeit).toBe(true);
+    expect(migriert.personen[0]).not.toHaveProperty('vorname');
   });
 });

@@ -549,6 +549,24 @@ td.zelle-ausgewaehlt {
 
 .abwesenheit-anzahl { cursor: help; }
 
+/* Abwesenheiten-Dialog (Dienstplan-Seite) */
+.abwesenheit-person {
+  padding: .75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.abwesenheit-person:last-of-type { border-bottom: none; }
+
+.abwesenheit-person-kopf {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+
+.abwesenheit-person-kopf .abwesenheit-add { margin-left: auto; }
+
+.abwesenheit-leer { font-size: .82rem; color: var(--text-muted); margin-bottom: .25rem; }
+
 /* ===== STATISTIK ===== */
 .stats-grid {
   display: grid;

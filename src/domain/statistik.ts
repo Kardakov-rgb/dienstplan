@@ -4,6 +4,7 @@
  * wie bei Soll/Max und Generator (domain/zaehlung.ts).
  */
 import type { DienstartId, Person, Zuweisung } from './types';
+import { personName } from './types';
 import { DIENSTARTEN } from './dienste';
 import { istFeiertag } from './feiertage';
 import { zerlege } from './datum';
@@ -105,7 +106,7 @@ export function statistikAlsCsv(statistiken: PersonStatistik[]): string {
     'Generiert',
   ];
   const zeilen = statistiken.map((s) => [
-    `${s.person.vorname} ${s.person.nachname}`,
+    personName(s.person),
     ...DIENSTARTEN.flatMap((d) => [
       String(s.proDienstart[d.id].ist),
       s.proDienstart[d.id].soll === null ? '' : String(s.proDienstart[d.id].soll),

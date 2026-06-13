@@ -13,8 +13,7 @@ function vollzeitkraft(anpassen: Partial<Person> = {}): Person {
   haeufigkeiten.vordergrund = { soll: 5, maximum: 10 };
   return {
     id: 'p1',
-    vorname: 'Erika',
-    nachname: 'Muster',
+    name: 'Erika Muster',
     aktiv: true,
     vollzeit: true,
     haeufigkeiten,

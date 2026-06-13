@@ -18,6 +18,14 @@ interface PersonV1 {
   wochenstunden?: number | null;
 }
 
+/** Personengestalt bis Schema-Version 3 (getrennter Vor-/Nachname). */
+interface PersonV3 {
+  id: string;
+  vorname?: string;
+  nachname?: string;
+  [key: string]: unknown;
+}
+
 /** Index = Ausgangsversion. migrationen[1] hebt Version 1 auf 2 usw. */
 const migrationen: Record<number, Migration> = {
   // v1 → v2: Rolle/Wochenstunden entfallen; stattdessen aktiv-Flag,
@@ -42,6 +50,16 @@ const migrationen: Record<number, Migration> = {
     ...daten,
     schemaVersion: 3,
     personen: daten.personen.map((p) => ({ ...p, vollzeit: p.vollzeit ?? false })),
+  }),
+
+  // v3 → v4: Vor-/Nachname werden zu einem einzelnen Namensfeld zusammengeführt.
+  3: (daten) => ({
+    ...daten,
+    schemaVersion: 4,
+    personen: (daten.personen as unknown as PersonV3[]).map((p) => {
+      const { vorname, nachname, ...rest } = p;
+      return { ...rest, name: `${vorname ?? ''} ${nachname ?? ''}`.trim() };
+    }) as unknown as GespeicherteDaten['personen'],
   }),
 };
 

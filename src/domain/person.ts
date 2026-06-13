@@ -26,6 +26,23 @@ export function leereHaeufigkeiten(): Record<DienstartId, DienstHaeufigkeit> {
   return ergebnis;
 }
 
+/**
+ * Vorbelegung für Vollzeitkräfte: Vordergrund 4/6, Visite 1/2, Davinci 1/2.
+ * Unbekannte (künftige) Dienstarten bleiben bei 0/0.
+ */
+export function vollzeitHaeufigkeiten(): Record<DienstartId, DienstHaeufigkeit> {
+  const standard: Partial<Record<DienstartId, DienstHaeufigkeit>> = {
+    vordergrund: { soll: 4, maximum: 6 },
+    visite: { soll: 1, maximum: 2 },
+    davinci: { soll: 1, maximum: 2 },
+  };
+  const ergebnis = leereHaeufigkeiten();
+  for (const d of DIENSTARTEN) {
+    if (standard[d.id]) ergebnis[d.id] = { ...standard[d.id]! };
+  }
+  return ergebnis;
+}
+
 /** Maximum 0 bedeutet: Person macht diese Dienstart grundsätzlich nicht. */
 export function darfDienst(person: Person, dienstartId: DienstartId): boolean {
   return (person.haeufigkeiten[dienstartId]?.maximum ?? 0) > 0;
@@ -36,9 +53,15 @@ export function machtIrgendeinenDienst(person: Person): boolean {
   return DIENSTARTEN.some((d) => darfDienst(person, d.id));
 }
 
-/** Kurzzeichen für enge Plan-Zellen, z.B. "EM" für Erika Muster. */
+/**
+ * Kurzzeichen für enge Plan-Zellen. Mehrere Wörter → Initialen ("Erika Muster"
+ * → "EM"), ein Wort → die ersten zwei Buchstaben ("Anna" → "AN").
+ */
 export function personKuerzel(person: Person): string {
-  return `${person.vorname.charAt(0)}${person.nachname.charAt(0)}`.toUpperCase();
+  const woerter = person.name.trim().split(/\s+/).filter(Boolean);
+  if (woerter.length === 0) return '?';
+  if (woerter.length === 1) return woerter[0].slice(0, 2).toUpperCase();
+  return (woerter[0].charAt(0) + woerter[woerter.length - 1].charAt(0)).toUpperCase();
 }
 
 /** Liefert die (erste) Abwesenheit, die das Datum abdeckt, sonst null. Grenztage inklusive. */
