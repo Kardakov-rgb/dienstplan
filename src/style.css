@@ -671,8 +671,157 @@ td.zelle-ausgewaehlt {
 .toast-fehler svg { color: #f87171; }
 .toast-info   svg { color: #93c5fd; }
 
+.toast { pointer-events: auto; }  /* allow clicks on individual toasts */
+
+.toast-aktion {
+  margin-left: auto;
+  padding: .25rem .65rem;
+  background: rgba(255,255,255,.15);
+  border: 1px solid rgba(255,255,255,.25);
+  border-radius: 999px;
+  color: #f9fafb;
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .14s ease;
+}
+.toast-aktion:hover { background: rgba(255,255,255,.25); }
+
 .toast-enter-active, .toast-leave-active { transition: opacity .2s ease, transform .2s ease; }
 .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(8px); }
+
+/* ===== FIXIERT-INDIKATOR ===== */
+td.zelle-fixiert { position: relative; }
+.zelle-pin {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  display: inline-block;
+}
+
+/* ===== PERSON-LEGENDE ===== */
+.person-legende {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-top: .9rem;
+}
+
+.person-legende-item {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .2rem .55rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: .78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--uebergang), color var(--uebergang), border-color var(--uebergang);
+}
+
+.person-legende-item:hover { background: var(--bg); color: var(--text); }
+
+.person-legende-aktiv {
+  background: var(--primary-soft);
+  border-color: var(--primary-border);
+  color: var(--primary-dark);
+  font-weight: 600;
+}
+
+.person-legende-zahl {
+  font-size: .7rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.person-legende-aktiv .person-legende-zahl { color: var(--primary); }
+
+/* ===== HIGHLIGHT / DIM (Personen-Filter) ===== */
+td.zelle-person-gedimmt { opacity: .25; }
+td.zelle-person-highlight { outline: 2px solid var(--primary); outline-offset: -2px; }
+
+/* ===== BADGE-KNOPF ===== */
+.badge-knopf {
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  font-weight: 600;
+  transition: opacity var(--uebergang);
+}
+.badge-knopf:hover { opacity: .8; }
+
+/* ===== BERICHT-LÜCKE KLICKBAR ===== */
+.bericht-luecke-klickbar {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: .1rem .25rem;
+  margin: -.1rem -.25rem;
+  transition: background var(--uebergang);
+}
+.bericht-luecke-klickbar:hover { background: var(--primary-soft); }
+
+/* ===== KAPAZITÄTS-AMPEL ===== */
+.kapazitaet-karte { margin-bottom: 1.25rem; }
+
+.kapazitaet-ampel {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 700;
+  font-size: .92rem;
+  margin-top: .5rem;
+}
+
+.ampel-punkt {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.ampel-gruen  { background: var(--success); }
+.ampel-gelb   { background: var(--warning); }
+.ampel-rot    { background: var(--danger); }
+
+.kapazitaet-zeilen { display: flex; flex-direction: column; gap: .3rem; margin-top: .6rem; font-size: .88rem; }
+.kapazitaet-zeile  { display: flex; justify-content: space-between; gap: 1rem; }
+.kapazitaet-wert   { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ===== FIXIERT-BADGE ===== */
+.fixiert-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .2rem .55rem;
+  background: var(--primary-soft);
+  border: 1px solid var(--primary-border);
+  border-radius: 999px;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--primary-dark);
+  cursor: pointer;
+  font-family: inherit;
+  transition: background var(--uebergang);
+}
+.fixiert-badge:hover { background: var(--primary-border); }
+
+.kandidat-stats {
+  font-size: .74rem;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 /* ===== DRUCKANSICHT ===== */
 @media print {

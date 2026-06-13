@@ -28,6 +28,10 @@ const ICONS: Record<string, string> = {
   pause: '<rect x="14" y="4" width="4" height="16" rx="1"/><rect x="6" y="4" width="4" height="16" rx="1"/>',
   abspielen: '<path d="m6 3 14 9-14 9V3Z"/>',
   punkt: '<circle cx="12" cy="12" r="6"/>',
+  reload:
+    '<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/>',
+  upload:
+    '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m17 8-5-5-5 5"/><path d="M12 3v12"/>',
 };
 
 const props = withDefaults(defineProps<{ name: string; groesse?: number }>(), { groesse: 16 });

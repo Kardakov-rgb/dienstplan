@@ -6,6 +6,7 @@ import { personName } from '../../domain/types';
 import { DIENSTARTEN } from '../../domain/dienste';
 import { abwesenheitsLabel, machtIrgendeinenDienst } from '../../domain/person';
 import { formatDatum } from '../../domain/datum';
+import { monatsBedarf } from '../../domain/zaehlung';
 import PersonForm from '../components/PersonForm.vue';
 import AppModal from '../components/AppModal.vue';
 import AppIcon from '../components/AppIcon.vue';
@@ -65,6 +66,49 @@ async function loeschen(p: Person) {
   await store.personLoeschen(p.id);
   zeigeToast('Person gelöscht', 'info');
 }
+
+// ===== KAPAZITÄTS-CHECK =====
+
+const kapazitaet = computed(() => {
+  const heute = new Date();
+  const jahr = heute.getFullYear();
+  const monat = heute.getMonth() + 1;
+  const bedarf = monatsBedarf(jahr, monat);
+
+  let gesamtBedarf = 0;
+  let gesamtSoll = 0;
+  let gesamtMax = 0;
+
+  for (const d of DIENSTARTEN) {
+    gesamtBedarf += bedarf[d.id];
+    for (const p of store.aktivePersonen) {
+      const h = p.haeufigkeiten[d.id];
+      if (h) {
+        gesamtSoll += h.soll;
+        gesamtMax += h.maximum;
+      }
+    }
+  }
+
+  let ampel: 'gruen' | 'gelb' | 'rot';
+  let ampelText: string;
+  if (gesamtSoll >= gesamtBedarf) {
+    ampel = 'gruen';
+    ampelText = 'Kapazität ausreichend';
+  } else if (gesamtMax >= gesamtBedarf) {
+    ampel = 'gelb';
+    ampelText = 'Soll unterschreitet Bedarf — Maximum reicht aus';
+  } else {
+    ampel = 'rot';
+    ampelText = 'Team-Maximum unterschreitet Bedarf';
+  }
+
+  const monatName = new Intl.DateTimeFormat('de', { month: 'long', year: 'numeric' }).format(
+    new Date(jahr, monat - 1),
+  );
+
+  return { gesamtBedarf, gesamtSoll, gesamtMax, ampel, ampelText, monatName };
+});
 </script>
 
 <template>
@@ -95,6 +139,29 @@ async function loeschen(p: Person) {
       @abgebrochen="formularSichtbar = false"
     />
   </AppModal>
+
+  <!-- Kapazitäts-Check -->
+  <div v-if="store.aktivePersonen.length > 0" class="card kapazitaet-karte">
+    <h2>Kapazitäts-Check — {{ kapazitaet.monatName }}</h2>
+    <div class="kapazitaet-zeilen">
+      <div class="kapazitaet-zeile">
+        <span>Bedarf (generierbare Dienste)</span>
+        <span class="kapazitaet-wert">{{ kapazitaet.gesamtBedarf }}</span>
+      </div>
+      <div class="kapazitaet-zeile">
+        <span>Team-Soll (Summe aktive Personen)</span>
+        <span class="kapazitaet-wert">{{ kapazitaet.gesamtSoll }}</span>
+      </div>
+      <div class="kapazitaet-zeile">
+        <span>Team-Maximum</span>
+        <span class="kapazitaet-wert">{{ kapazitaet.gesamtMax }}</span>
+      </div>
+    </div>
+    <div class="kapazitaet-ampel">
+      <span class="ampel-punkt" :class="`ampel-${kapazitaet.ampel}`"></span>
+      {{ kapazitaet.ampelText }}
+    </div>
+  </div>
 
   <div class="card">
     <div v-if="sichtbarePersonen.length === 0" class="empty-state">
