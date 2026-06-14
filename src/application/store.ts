@@ -6,10 +6,16 @@
 import { defineStore } from 'pinia';
 import type { Abwesenheit, DienstartId, ISODate, Person, Zuweisung } from '../domain/types';
 import { DIENSTARTEN } from '../domain/dienste';
-import { imMonat } from '../domain/datum';
+import { imMonat, zerlege } from '../domain/datum';
 import { generierePlan, type GenerierungsErgebnis } from '../domain/generator/generator';
 import type { DatenSpeicher } from '../infrastructure/storage/port';
 import { AKTUELLE_SCHEMA_VERSION, leereDaten } from '../infrastructure/storage/port';
+import {
+  baueJahresMatrix,
+  ersetzeJahresAbwesenheiten,
+  leseJahresMatrix,
+  type ImportBericht,
+} from '../infrastructure/xlsx/dienstplanXlsxFormat';
 import { migriere } from './migrations';
 
 /** Wirft bei fachlich unzulässigen Personendaten; die UI fängt das vorher ab. */
@@ -180,26 +186,35 @@ export const useDatenStore = defineStore('daten', {
       await this.speichern();
     },
 
-    /** Serialisiert den gesamten Datenstand als JSON-String. */
-    async exportierenAlsJson(): Promise<string> {
-      return JSON.stringify(
-        {
-          schemaVersion: AKTUELLE_SCHEMA_VERSION,
-          personen: this.personen,
-          zuweisungen: this.zuweisungen,
-        },
-        null,
-        2,
-      );
+    /** Exportiert ein Jahr als .xlsx im Format der Klinik-Vorlage (12 Monatsblätter). */
+    async exportierenAlsXlsx(jahr: number): Promise<ArrayBuffer> {
+      // exceljs erst bei Bedarf laden (eigener Chunk, hält das Haupt-Bundle klein).
+      const { matrixZuXlsx } = await import('../infrastructure/xlsx/xlsxAdapter');
+      const blaetter = baueJahresMatrix(this.personen, this.zuweisungen, jahr);
+      return matrixZuXlsx(blaetter);
     },
 
-    /** Importiert einen zuvor exportierten JSON-String und speichert ihn. */
-    async importierenAusJson(json: string): Promise<void> {
-      const daten = JSON.parse(json);
-      const migriert = migriere(daten);
-      this.personen = migriert.personen;
-      this.zuweisungen = migriert.zuweisungen;
-      await this.speichern();
+    /**
+     * Importiert eine .xlsx im Vorlagen-Format. Personen-Stammdaten bleiben
+     * unverändert; die Zuweisungen des enthaltenen Jahres werden ersetzt und
+     * die Abwesenheiten der erkannten Personen für dieses Jahr übernommen.
+     * Nicht zuordenbare Namen werden übersprungen und im Bericht aufgelistet.
+     */
+    async importierenAusXlsx(buffer: ArrayBuffer): Promise<ImportBericht> {
+      const { xlsxZuMatrix } = await import('../infrastructure/xlsx/xlsxAdapter');
+      const blaetter = await xlsxZuMatrix(buffer);
+      const ergebnis = leseJahresMatrix(blaetter, this.personen);
+      if (ergebnis.jahr !== null) {
+        const jahr = ergebnis.jahr;
+        this.zuweisungen = this.zuweisungen.filter((z) => zerlege(z.datum).jahr !== jahr);
+        this.zuweisungen.push(...ergebnis.zuweisungen);
+        for (const [personId, neu] of ergebnis.abwesenheitenProPerson) {
+          const p = this.personen.find((p) => p.id === personId);
+          if (p) p.abwesenheiten = ersetzeJahresAbwesenheiten(p.abwesenheiten, neu, jahr);
+        }
+        await this.speichern();
+      }
+      return ergebnis.bericht;
     },
 
     async personAktivSetzen(id: string, aktiv: boolean) {

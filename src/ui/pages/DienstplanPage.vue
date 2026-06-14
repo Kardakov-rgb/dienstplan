@@ -265,33 +265,36 @@ const personenMitZahlen = computed(() =>
   })),
 );
 
-async function jsonExportieren() {
-  const json = await store.exportierenAlsJson();
-  const blob = new Blob([json], { type: 'application/json' });
+async function xlsxExportieren() {
+  const buffer = await store.exportierenAlsXlsx(jahr.value);
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  const datumStr = new Date().toISOString().slice(0, 10);
-  a.download = `dienstplan-backup-${datumStr}.json`;
+  a.download = `dienstplan-${jahr.value}.xlsx`;
   a.click();
   URL.revokeObjectURL(a.href);
-  zeigeToast('Backup heruntergeladen', 'erfolg');
+  zeigeToast(`Excel-Export ${jahr.value} heruntergeladen`, 'erfolg');
 }
 
-const jsonImportInput = ref<HTMLInputElement | null>(null);
+const xlsxImportInput = ref<HTMLInputElement | null>(null);
 
-function jsonImportieren() {
-  jsonImportInput.value?.click();
+function xlsxImportieren() {
+  xlsxImportInput.value?.click();
 }
 
-async function jsonDateiGewaehlt(event: Event) {
+async function xlsxDateiGewaehlt(event: Event) {
   const input = event.target as HTMLInputElement;
   const datei = input.files?.[0];
   if (!datei) return;
   const ok = await frageBestaetigung({
-    titel: 'Backup importieren?',
+    titel: 'Excel-Datei importieren?',
     text:
-      'Der aktuelle Datenbestand wird durch die importierte Datei ersetzt.\n\n' +
-      'Sicher fortfahren?',
+      'Die Dienste des in der Datei enthaltenen Jahres werden ersetzt und die ' +
+      'Abwesenheiten der erkannten Personen übernommen. Personen-Stammdaten bleiben ' +
+      'unverändert.\n\nNicht zuordenbare Namen (z. B. Abkürzungen oder Freitext) werden ' +
+      'übersprungen und anschließend aufgelistet.\n\nSicher fortfahren?',
     bestaetigenText: 'Importieren',
     gefaehrlich: true,
   });
@@ -300,9 +303,18 @@ async function jsonDateiGewaehlt(event: Event) {
     return;
   }
   try {
-    const text = await datei.text();
-    await store.importierenAusJson(text);
-    zeigeToast('Backup erfolgreich importiert', 'erfolg');
+    const buffer = await datei.arrayBuffer();
+    const bericht = await store.importierenAusXlsx(buffer);
+    const zusammenfassung = `${bericht.zuweisungen} Dienste, ${bericht.abwesenheitsTage} Abwesenheits-Tage übernommen`;
+    if (bericht.uebersprungen.length > 0) {
+      console.warn('Übersprungene Einträge beim Excel-Import:', bericht.uebersprungen);
+      zeigeToast(
+        `${zusammenfassung} — ${bericht.uebersprungen.length} übersprungen (Details in der Konsole)`,
+        'info',
+      );
+    } else {
+      zeigeToast(zusammenfassung, 'erfolg');
+    }
   } catch {
     zeigeToast('Import fehlgeschlagen — ungültige Datei?', 'fehler');
   }
@@ -362,20 +374,20 @@ watch([() => store.personen.length], () => {
         <AppIcon name="papierkorb" :groesse="15" />
         Monat leeren
       </button>
-      <button class="btn btn-secondary" title="Alle Daten als JSON herunterladen" @click="jsonExportieren">
+      <button class="btn btn-secondary" title="Aktuelles Jahr als Excel-Datei herunterladen" @click="xlsxExportieren">
         <AppIcon name="download" />
-        Backup
+        Export
       </button>
-      <button class="btn btn-secondary" title="Daten aus JSON-Backup importieren" @click="jsonImportieren">
+      <button class="btn btn-secondary" title="Excel-Datei (Vorlagen-Format) importieren" @click="xlsxImportieren">
         <AppIcon name="upload" />
         Import
       </button>
       <input
-        ref="jsonImportInput"
+        ref="xlsxImportInput"
         type="file"
-        accept=".json"
+        accept=".xlsx"
         style="display: none"
-        @change="jsonDateiGewaehlt"
+        @change="xlsxDateiGewaehlt"
       />
     </div>
   </div>
